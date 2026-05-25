@@ -1,4 +1,4 @@
-MAP_FILE = challenger/01_the_impossible_dream.txt
+MAP_FILE = maps/challenger/01_the_impossible_dream.txt
 
 # MAP_FILE = maps/hard/01_maze_nightmare.txt
 # MAP_FILE = maps/hard/02_capacity_hell.txt

@@ -1,6 +1,8 @@
 # Fly-in
 Multi-agent drone routing simulator in Python with custom pathfinding for dynamic networks. Handles concurrent drone movement, zone occupancy rules, and conflict resolution while optimizing for minimal simulation turns. Focuses on graph algorithms, OOP design, and performance under real-world constraints like bottlenecks and deadlock prevention.
 
+![Demo](assets/demo.gif)
+
 
 ### O que é o heapq?
 É um módulo do Python que implementa uma fila de prioridade mínima — uma lista onde o elemento com o menor valor sai sempre primeiro, independentemente da ordem em que foi inserido.
