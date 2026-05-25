@@ -15,7 +15,7 @@ class Visualizer:
         self.history = history
         # Simulation state
         self.current_turn = 0
-        self.total_turns = len(history) # can be updated later
+        self.total_turns = len(history)
         self.is_paused = False
         self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
         self.animation_speed: float = 0.05   # quanto avança por frame
@@ -170,6 +170,8 @@ class Visualizer:
             "Arrow Up  Increase FPS",
             "->  Next turn",
             "R  Reset view",
+            "S  Restart Simulation",
+            "E  Finnish Simulation",
             "Q  Quit"
         ]
         
@@ -322,6 +324,7 @@ class Visualizer:
                         self.pan_offset_x = max(-effective_limit, min(effective_limit, self.pan_offset_x))
                         self.pan_offset_y = max(-effective_limit, min(effective_limit, self.pan_offset_y))
                         self.mouse_prev_x, self.mouse_prev_y = event.pos
+
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         self.is_paused = not self.is_paused
@@ -334,12 +337,20 @@ class Visualizer:
                         self.zoom = 0.85
                         self.pan_offset_x = 0
                         self.pan_offset_y = 0
+
                     elif event.key == pygame.K_UP:
                         if self.FPS < 180:
                             self.FPS += 15
                     elif event.key == pygame.K_DOWN:
                         if self.FPS >= 30:
                             self.FPS -= 15
+                        
+                    elif event.key == pygame.K_s:
+                        self.current_turn = 0
+                    
+                    elif event.key == pygame.K_e:
+                        self.current_turn = len(self.history)
+
                     elif event.key == pygame.K_q:
                         running = False
             

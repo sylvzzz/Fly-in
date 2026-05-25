@@ -1,4 +1,5 @@
 import os
+import sys
 from parsing import Parser
 from graph.graph import Graph
 from visualizer.visualizer import Visualizer
@@ -191,24 +192,42 @@ def test_visualizer() -> None:
         vis = Visualizer(1280, 780, 60, graph)
         vis.run()
 
+def main(map_file: str) -> None:
+    from parsing import Parser
+    from graph.graph import Graph
+    from drone.drone import Drone
+    from engine.engine import Engine
+
+
+    parser = Parser(map_file)
+    nb_drones, start, end, hubs, connections = parser.get_map_data()
+
+        # construir o grafo
+    graph = Graph()
+    graph.add_zone(start)
+    graph.add_zone(end)
+    for hub in hubs:
+        graph.add_zone(hub)
+    for conn in connections:
+        graph.add_connection(conn)
+
+        # encontrar caminho e criar drones
+    paths = graph.generate_paths(start, end, nb_drones)
+    drones = [Drone(i + 1, start, paths[i % len(paths)]) for i in range(nb_drones)]
+
+    path = graph.find_path(start, end)
+    engine = Engine(graph, drones, end)
+    data = engine.run()
+    vis = Visualizer(1280, 780, 60, graph, data, start)
+    vis.run()
+
 if __name__ == "__main__":
-    """
-    Maps list:
-
-    maps/challenger/01_the_impossible_dream.txt
-
-
-    maps/hard/01_maze_nightmare.txt
-    maps/hard/02_capacity_hell.txt
-    maps/hard/03_ultimate_challenge.txt
-
-    maps/medium/01_dead_end_trap.txt
-    maps/medium/02_circular_loop.txt
-    maps/medium/03_priority_puzzle.txt
-    
-    maps/easy/01_linear_path.txt
-    maps/easy/02_simple_fork.txt
-    maps/easy/03_basic_capacity.txt
-
-    """
-    testar_engine()
+    args = sys.argv
+    if len(args) == 2:
+        try:
+            map_file = args[1]
+            main(map_file)
+        except FileNotFoundError:
+            print("\033[31m" + f"\nMap file {map_file} not found" + "\033[0m")
+    else:
+        print("Correct usage: python3 Fly-in.py map_file.txt")

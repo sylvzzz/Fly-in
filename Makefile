@@ -1,4 +1,17 @@
-MAP_FILE = maps/hard/01_maze_nightmare.txt
+MAP_FILE = challenger/01_the_impossible_dream.txt
+
+# MAP_FILE = maps/hard/01_maze_nightmare.txt
+# MAP_FILE = maps/hard/02_capacity_hell.txt
+# MAP_FILE = maps/hard/03_ultimate_challenge.txt
+
+# MAP_FILE = maps/medium/01_dead_end_trap.txt
+# MAP_FILE = maps/medium/02_circular_loop.txt
+# MAP_FILE = maps/medium/03_priority_puzzle.txt
+    
+# MAP_FILE = maps/easy/01_linear_path.txt
+# MAP_FILE = maps/easy/02_simple_fork.txt
+# MAP_FILE = maps/easy/03_basic_capacity.txt
+
 MAIN	= Fly-in.py
 
 build:
@@ -10,7 +23,7 @@ install: build
 
 
 run:
-	clear;python3 $(MAIN) $(MAP_FILE)
+	python3 $(MAIN) $(MAP_FILE)
 
 debug:
 	python3 -m pdb $(MAIN) $(MAP_FILE)
