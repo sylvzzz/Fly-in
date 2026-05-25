@@ -100,3 +100,19 @@ Drones were doing more than 1 move per turn
 - **Resolução:** Usar `generate_paths` em vez de `find_path` na criação dos drones, atribuindo a cada drone um caminho diferente com `paths[i % len(paths)]`.
 
 
+
+**O que fizemos no visualizer:**
+
+Construímos um visualizer em pygame com as seguintes funcionalidades — grafo desenhado com zonas coloridas e conexões, sidebar com informação do turno e comandos, zoom e pan com rato e teclado, resize da janela, e drones representados por uma imagem PNG a mover-se turno a turno.
+
+**Problemas e soluções:**
+
+O primeiro problema foi que os drones não apareciam porque o `current_turn` começava em 0 e o `draw_drones` retornava imediatamente sem desenhar nada. A solução foi tratar o turno 0 como estado inicial com todos os drones no start, e desenhar esse estado especificamente.
+
+O segundo problema foi que todos os drones estavam sobrepostos na mesma zona — com 25 drones todos no `start` só se via um. A solução foi calcular um offset circular para cada drone na mesma zona usando `math.cos` e `math.sin`, espalhando-os em círculo à volta do centro da zona.
+
+O terceiro problema foi encontrar o `start_zone` de forma robusta sem depender do nome da zona. A solução foi passar o `start_zone` diretamente ao `Visualizer` como parâmetro no `__init__`, em vez de o procurar pelo nome.
+
+O quarto problema foi a imagem do drone carregada como variável local no `run` mas usada no `draw_drones`. A solução foi passar a imagem como parâmetro ao método `draw_drones` em vez de a guardar como atributo.
+
+O que falta ainda implementar é o avanço automático de turnos quando não está pausado, e a legenda de tipos de zona na sidebar.

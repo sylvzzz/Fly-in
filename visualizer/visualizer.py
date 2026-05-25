@@ -17,6 +17,8 @@ class Visualizer:
         self.current_turn = 0
         self.total_turns = len(history) # can be updated later
         self.is_paused = False
+        self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
+        self.animation_speed: float = 0.05   # quanto avança por frame
         
         self.start_zone = start_zone
 
@@ -164,6 +166,8 @@ class Visualizer:
             "-  Zoom out",
             "Space  Play/Pause",
             "<-  Prev turn",
+            "Arror Down  Decrease FPS",
+            "Arrow Up  Increase FPS",
             "->  Next turn",
             "R  Reset view",
             "Q  Quit"
@@ -179,10 +183,14 @@ class Visualizer:
         drones_title = font_title.render("Drones:", True, (200, 200, 200))
         screen.blit(drones_title, (sidebar_x + 10, y_offset))
         y_offset += 25
+
+        fps_info = font_text.render(f"FPS: {self.FPS}", True, (200, 200, 200))
+        screen.blit(fps_info, (sidebar_x + 10, y_offset))
         
+        y_offset += 35
+
         if self.history and self.current_turn > 0:
             turn_data = self.history[self.current_turn - 1]
-            font_small = pygame.font.Font(None, 12)
             
             for i, drone in enumerate(turn_data["drones"]):
                 if drone["delivered"]:
@@ -193,7 +201,7 @@ class Visualizer:
                     status_text = f"at {zone}"
                     color = (200, 200, 200)
                 
-                drone_label = font_small.render(f"D{i+1}: {status_text}", True, color)
+                drone_label = font_text.render(f"D{i+1}: {status_text}", True, color)
                 screen.blit(drone_label, (sidebar_x + 10, y_offset))
                 y_offset += 15
 
@@ -203,6 +211,15 @@ class Visualizer:
         # turno 0 — estado inicial, todos os drones no start
         if not self.history:
             return
+        
+        # posição atual
+        turn_data = self.history[self.current_turn - 1]
+
+        # posição anterior (se existir)
+        if self.current_turn > 1:
+            prev_turn_data = self.history[self.current_turn - 2]
+        else:
+            prev_turn_data = None
 
         if self.current_turn == 0:
             total = len(self.history[0]["drones"])
@@ -242,6 +259,20 @@ class Visualizer:
                 continue
 
             cx, cy = self.to_screen(zone.x, zone.y)
+
+            # interpolar com posição anterior
+            if prev_turn_data:
+                prev_zone_name = None
+                for pd in prev_turn_data["drones"]:
+                    if pd["id"] == drone["id"]:
+                        prev_zone_name = pd["zone"] or pd["dest"]
+                        break
+                if prev_zone_name:
+                    prev_zone = self.graph.zones.get(prev_zone_name)
+                    if prev_zone:
+                        px, py = self.to_screen(prev_zone.x, prev_zone.y)
+                        cx = int(px + (cx - px) * self.animation_progress)
+                        cy = int(py + (cy - py) * self.animation_progress)
 
             idx = zone_drone_index.get(zone_name, 0)
             total = zone_drone_count[zone_name]
@@ -303,6 +334,12 @@ class Visualizer:
                         self.zoom = 0.85
                         self.pan_offset_x = 0
                         self.pan_offset_y = 0
+                    elif event.key == pygame.K_UP:
+                        if self.FPS < 180:
+                            self.FPS += 15
+                    elif event.key == pygame.K_DOWN:
+                        if self.FPS >= 30:
+                            self.FPS -= 15
                     elif event.key == pygame.K_q:
                         running = False
             
@@ -321,5 +358,12 @@ class Visualizer:
             self.draw_sidebar(screen)
             
             pygame.display.flip()
+            if not self.is_paused:
+                self.animation_progress += self.animation_speed
+                if self.animation_progress >= 1.0:
+                    self.animation_progress = 0.0
+                    if self.current_turn < self.total_turns:
+                        self.current_turn += 1
+
             clock.tick(self.FPS)
         pygame.quit()
