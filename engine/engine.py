@@ -150,6 +150,7 @@ class Engine:
                                 # if it moved dont block
                                 drone.arrived_this_turn = False
 
+            moving_in: dict[str, int] = {}
             # Segundo passo: movimentos normais
             for drone in self.drones:
                 if drone.delivered or drone.in_transit:
@@ -169,7 +170,9 @@ class Engine:
                     and d.drone_id not in moving_out
                 ])
 
-                if drones_in_zone >= next_zone.max_drones:
+                already_moving_in = moving_in.get(next_zone.name, 0)
+                total = drones_in_zone + already_moving_in
+                if total >= next_zone.max_drones:
                     continue
                 if drone.current_zone is None:
                     continue
@@ -203,7 +206,9 @@ class Engine:
                     drone.current_zone = None
                     drone.path_index += 1
                     turn_moves.append(f"D{drone.drone_id}-{conn_name}")
+                    moving_in[next_zone.name] = already_moving_in + 1
                 else:
+                    moving_in[next_zone.name] = already_moving_in + 1
                     drone.current_zone = next_zone
                     drone.path_index += 1
                     turn_moves.append(f"D{drone.drone_id}-{next_zone.name}")

@@ -309,7 +309,7 @@ class Visualizer:
         screen.blit(drones_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
-        speed_count = round((self.animation_speed * 100) / 2, 1)
+        speed_count = round((self.animation_speed * 200) / 2, 1)
         speed_info = self.font_text.render(f"Speed: {speed_count}",
                                            True, (200, 200, 200))
         screen.blit(speed_info, (sidebar_x + 10, y_offset))
