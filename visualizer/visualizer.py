@@ -28,7 +28,7 @@ class Visualizer:
         # Simulation state
         self.current_turn = 0
         self.total_turns = len(history)
-        self.is_paused = False
+        self.is_paused = True
         self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
         self.animation_speed: float = 0.05   # quanto avança por frame
         

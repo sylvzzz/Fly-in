@@ -16,7 +16,7 @@ class Engine:
     Args:
             graph: Graph structure representing zones and connections.
             drones: List of drones participating in the simulation.
-            end_zone: Final destination zone where drones are considered delivered.
+            end_zone: Final destination zone where drones are delivered.
     """
     def __init__(self, graph: Graph, drones: list[Drone],
                  end_zone: Zone) -> None:
@@ -92,7 +92,7 @@ class Engine:
                         drone.delivered = True
                         continue
 
-                    # tenta imediatamente entrar em trânsito para a próxima zona
+                    # imeadiatly tries to move to the next zone
                     if drone.path_index < len(drone.path):
                         next_zone = drone.path[drone.path_index]
                         if next_zone.zone_type == ZoneType.RESTRICTED:
@@ -106,24 +106,38 @@ class Engine:
                             already_arriving = len([
                                 d for d in self.drones
                                 if d.transit_destination is not None
-                                and d.transit_destination.name == next_zone.name
+                                and d.transit_destination.name
+                                == next_zone.name
                             ])
-                            connection = self.graph.get_connection(drone.current_zone, next_zone)
+                            connection = self.graph.get_connection(
+                                drone.current_zone, next_zone
+                                )
                             conn_ok = True
                             if connection is not None:
-                                conn_key = f"{min(connection.zone1.name, connection.zone2.name)}-{max(connection.zone1.name, connection.zone2.name)}"
-                                if self.connections_used.get(conn_key, 0) >= connection.max_link_capacity:
+                                z1_name = connection.zone1.name
+                                z2_name = connection.zone2.name
+                                key_min = min(z1_name, z2_name)
+                                key_max = max(z1_name, z2_name)
+                                conn_key = f"{key_min}-{key_max}"
+                                used = self.connections_used.get(conn_key, 0)
+                                if used >= connection.max_link_capacity:
                                     conn_ok = False
                                 else:
-                                    self.connections_used[conn_key] = self.connections_used.get(conn_key, 0) + 1
-                            if conn_ok and drones_in_next + already_arriving < next_zone.max_drones:
-                                conn_name = f"{drone.current_zone.name}-{next_zone.name}"
+                                    # c = nbr of drones using that connection
+                                    c = self.connections_used.get(conn_key, 0)
+                                    self.connections_used[conn_key] = c + 1
+                            total_in_next = drones_in_next + already_arriving
+                            can_fit = total_in_next < next_zone.max_drones
+                            if conn_ok and can_fit:
+                                d_name = drone.current_zone.name
+                                c_name = f"{d_name}-{next_zone.name}"
                                 drone.in_transit = True
                                 drone.transit_destination = next_zone
                                 drone.current_zone = None  # type: ignore
                                 drone.path_index += 1
-                                turn_moves[-1] = f"D{drone.drone_id}-{conn_name}"
-                                drone.arrived_this_turn = False  # já se moveu, não bloquear
+                                turn_moves[-1] = f"D{drone.drone_id}-{c_name}"
+                                # if it moved dont block
+                                drone.arrived_this_turn = False
 
             # Segundo passo: movimentos normais
             for drone in self.drones:
@@ -147,12 +161,19 @@ class Engine:
                 if drones_in_zone >= next_zone.max_drones:
                     continue
 
-                connection = self.graph.get_connection(drone.current_zone, next_zone)
+                connection = self.graph.get_connection(drone.current_zone,
+                                                       next_zone)
                 if connection is not None:
-                    conn_key = f"{min(connection.zone1.name, connection.zone2.name)}-{max(connection.zone1.name, connection.zone2.name)}"
-                    if self.connections_used.get(conn_key, 0) >= connection.max_link_capacity:
+                    z1_name = connection.zone1.name
+                    z2_name = connection.zone2.name
+                    key_min = min(z1_name, z2_name)
+                    key_max = max(z1_name, z2_name)
+                    conn_key = f"{key_min}-{key_max}"
+
+                    used = self.connections_used.get(conn_key, 0)
+                    if used >= connection.max_link_capacity:
                         continue
-                    self.connections_used[conn_key] = self.connections_used.get(conn_key, 0) + 1
+                    self.connections_used[conn_key] = used + 1
 
                 if next_zone.zone_type == ZoneType.RESTRICTED:
                     # verifica se há espaço garantido no próximo turn
@@ -161,7 +182,8 @@ class Engine:
                         if d.transit_destination is not None
                         and d.transit_destination.name == next_zone.name
                     ])
-                    if drones_in_zone + already_arriving >= next_zone.max_drones:
+                    total_in_zone = drones_in_zone + already_arriving
+                    if total_in_zone >= next_zone.max_drones:
                         continue  # não entra em trânsito, espera
                     conn_name = f"{drone.current_zone.name}-{next_zone.name}"
                     drone.in_transit = True
@@ -180,18 +202,25 @@ class Engine:
 
             if turn_moves:
                 print(" ".join(turn_moves))
+
+            drone_states = []
+            for d in self.drones:
+                zone_name = d.current_zone.name if d.current_zone else None
+                dest_name = (
+                    d.transit_destination.name
+                    if d.transit_destination else None
+                )
+                drone_states.append({
+                    "id": d.drone_id,
+                    "zone": zone_name,
+                    "in_transit": d.in_transit,
+                    "dest": dest_name,
+                    "delivered": d.delivered,
+                })
+
             moves_history.append({
                 "turn": self.turns,
                 "connections_used": dict(self.connections_used),
-                "drones": [
-                    {
-                        "id": d.drone_id,
-                        "zone": d.current_zone.name if d.current_zone else None,
-                        "in_transit": d.in_transit,
-                        "dest": d.transit_destination.name if d.transit_destination else None,
-                        "delivered": d.delivered,
-                    }
-                    for d in self.drones
-                ],
+                "drones": drone_states,
             })
         return moves_history

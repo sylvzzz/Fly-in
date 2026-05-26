@@ -2,6 +2,7 @@ from zone import Zone, ZoneType
 from connection import Connection
 import sys
 
+
 class Parser:
     """
     Responsible for reading and validating a map file and converting it
@@ -30,10 +31,10 @@ class Parser:
         Extracts key-value metadata pairs from a bracketed string.
 
         Example:
-            "[zone=restricted color=red]" → {"zone": "restricted", "color": "red"}
+        "[zone=restricted color=red]" → {"zone": "restricted", "color": "red"}
 
         Args:
-            metadata: Raw metadata string including brackets.
+        metadata: Raw metadata string including brackets.
 
         Returns:
             Dictionary containing parsed key-value pairs.
@@ -70,15 +71,16 @@ class Parser:
             "priority": ZoneType.PRIORITY,
         }
         if zone_str not in valid_types:
-            print("\033[31m" + 
-                f"Line {line_num}: invalid zone type '{zone_str}'. "
-                f"Must be one of: {list(valid_types.keys())}" + "\033[0m"
-            )
+            print("\033[31m" +
+                  f"Line {line_num}: invalid zone type '{zone_str}'. "
+                  f"Must be one of: {list(valid_types.keys())}" + "\033[0m"
+                  )
             sys.exit(1)
 
         return valid_types[zone_str]
 
-    def parse_hub_line(self, value: str, line_num: int) -> tuple[str, int, int, dict[str, str]]:
+    def parse_hub_line(self, value: str,
+                       line_num: int) -> tuple[str, int, int, dict[str, str]]:
         """Parse the content of a hub line after the prefix.
 
         Example input: 'roof1 3 4 [zone=restricted color=red]'
@@ -94,7 +96,7 @@ class Parser:
         if "[" in value:
             # Split at the first '[' to get the main part and the metadata
             main_part, meta_part = value.split("[", 1)
-            meta_part = "[" + meta_part  # restore the bracket for parse_metadata
+            meta_part = "[" + meta_part  # restore the bracket 2 parse_metadata
         else:
             main_part = value
             meta_part = ""
@@ -103,14 +105,17 @@ class Parser:
         parts = main_part.strip().split()
         if len(parts) != 3:
             print("\033[31m" +
-                f"Line {line_num}: expected 'name x y' but got '{main_part.strip()}'" + "\033[0m"
-            )
+                  f"Line {line_num}: expected 'name x y' "
+                  f"but got '{main_part.strip()}'"
+                  + "\033[0m"
+                  )
             sys.exit(1)
 
         name = parts[0]
-        # Zone names cannot contain dashes (connection syntax uses dashes as separator)
+        # Zone names cannot contain dashes
         if "-" in name:
-            print("\033[31m" + f"Line {line_num}: zone name '{name}' cannot contain dashes" + "\033[0m")
+            print("\033[31m" + f"Line {line_num}: zone name '{name}' "
+                  "cannot contain dashes" + "\033[0m")
             sys.exit(1)
 
         # Parse x and y as integers
@@ -119,13 +124,15 @@ class Parser:
             y = int(parts[2])
         except ValueError:
             print("\033[31m" +
-                f"Line {line_num}: coordinates must be integers, got '{parts[1]}' and '{parts[2]}'" + "\033[0m"
-            )
+                  f"Line {line_num}: coordinates must be integers,"
+                  f"got '{parts[1]}' and '{parts[2]}'" + "\033[0m"
+                  )
 
         metadata = self.parse_metadata(meta_part) if meta_part else {}
         return name, x, y, metadata
 
-    def get_map_data(self) -> tuple[int, Zone, Zone, list[Zone], list[Connection]]:
+    def get_map_data(self) -> tuple[int, Zone, Zone, list[Zone],
+                                    list[Connection]]:
         """Parse the map file and return all map data as typed objects.
 
         Returns:
@@ -156,21 +163,24 @@ class Parser:
                 if nb_drones == 0:
                     if not line.startswith("nb_drones:"):
                         print("\033[31m" +
-                            f"Line {line_num}: first line must be 'nb_drones: <number>'" + "\033[0m"
-                        )
+                              f"Line {line_num}: first line must "
+                              "be 'nb_drones: <number>'" + "\033[0m"
+                              )
                         sys.exit(1)
                     try:
                         nb_drones = int(line.split(":", 1)[1].strip())
                     except ValueError:
                         print("\033[31m" +
-                            f"ERROR: Line {line_num}: nb_drones must be a positive integer" + "\033[0m"
-                        )
+                              f"ERROR: Line {line_num}: nb_drones must "
+                              "be a positive number" + "\033[0m"
+                              )
                         sys.exit(1)
                     continue
 
                 # Split into prefix and value at the first ': '
                 if ": " not in line:
-                    print("\033[31m" + f"ERROR: Line {line_num}: unrecognized line format: '{line}'" + "\033[0m")
+                    print("\033[31m" + f"ERROR: Line {line_num}: "
+                          f"unrecognized line format: '{line}'" + "\033[0m")
                     sys.exit(1)
 
                 prefix, value = line.split(": ", 1)
@@ -183,7 +193,8 @@ class Parser:
 
                     # Check for duplicate zone names
                     if name in all_zones:
-                        print("\033[31m" + f"ERROR: Line {line_num}: duplicate zone name '{name}'" + "\033[0m")
+                        print("\033[31m" + f"ERROR: Line {line_num}: "
+                              f"duplicate zone name '{name}'" + "\033[0m")
                         sys.exit(1)
 
                     # Get zone type from metadata, defaulting to NORMAL
@@ -197,8 +208,9 @@ class Parser:
                             max_drones = int(meta["max_drones"])
                         except ValueError:
                             print("\033[31m" +
-                                f"ERROR: Line {line_num}: max_drones must be a positive integer" + "\033[0m"
-                            )
+                                  f"ERROR: Line {line_num}: max_drones must "
+                                  "be a positive number" + "\033[0m"
+                                  )
                             sys.exit(1)
 
                     color = meta.get("color", None)
@@ -215,12 +227,14 @@ class Parser:
                     # Register the zone by its role
                     if prefix == "start_hub":
                         if start_zone is not None:
-                            print("\033[31m" + f"ERROR: Line {line_num}: duplicate start_hub" + "\033[0m")
+                            print("\033[31m" + f"ERROR: Line {line_num}: "
+                                  "duplicate start_hub" + "\033[0m")
                             sys.exit(1)
                         start_zone = zone
                     elif prefix == "end_hub":
                         if end_zone is not None:
-                            print("\033[31m" + f"ERROR: Line {line_num}: duplicate end_hub" + "\033[31m")
+                            print("\033[31m" + f"ERROR: Line {line_num}: "
+                                  "duplicate end_hub" + "\033[31m")
                             sys.exit(1)
                         end_zone = zone
                     else:
@@ -243,8 +257,10 @@ class Parser:
                     # Connection format: zone1-zone2
                     if "-" not in conn_part:
                         print("\033[31m" +
-                            f"ERROR: Line {line_num}: connection must be 'zone1-zone2', got '{conn_part}'" + "\033[0m"
-                        )
+                              f"ERROR: Line {line_num}: "
+                              "connection must be 'zone1-zone2',"
+                              f" got '{conn_part}'" + "\033[0m"
+                              )
                         sys.exit(1)
 
                     zone1_name, zone2_name = conn_part.split("-", 1)
@@ -252,21 +268,24 @@ class Parser:
                     # Both zones must have been defined before the connection
                     if zone1_name not in all_zones:
                         print("\033[31m" +
-                            f"ERROR: Line {line_num}: unknown zone '{zone1_name}'" + "\033[0m"
-                        )
+                              f"ERROR: Line {line_num}: "
+                              f"unknown zone '{zone1_name}'" + "\033[0m"
+                              )
                         sys.exit(1)
                     if zone2_name not in all_zones:
                         print("\033[31m" +
-                            f"ERROR: Line {line_num}: unknown zone '{zone2_name}'" + "\033[0m"
-                        )
+                              f"ERROR: Line {line_num}: "
+                              f"unknown zone '{zone2_name}'" + "\033[0m"
+                              )
                         sys.exit(1)
 
                     # Detect duplicate connections (a-b and b-a are the same)
                     conn_key = frozenset([zone1_name, zone2_name])
                     if conn_key in seen_connections:
                         print("\033[31m" +
-                            f"ERROR: Line {line_num}: duplicate connection '{conn_part}'" + "\033[0m"
-                        )
+                              f"ERROR: Line {line_num}: "
+                              f"duplicate connection '{conn_part}'" + "\033[0m"
+                              )
                         sys.exit(1)
                     seen_connections.add(conn_key)
 
@@ -278,8 +297,10 @@ class Parser:
                             max_link_capacity = int(meta["max_link_capacity"])
                         except ValueError:
                             print("\033[31m" +
-                                f"ERROR: Line {line_num}: max_link_capacity must be a positive integer" + "\033[0m"
-                            )
+                                  f"ERROR: Line {line_num}: "
+                                  "max_link_capacity must be a positive number"
+                                  + "\033[0m"
+                                  )
                             sys.exit(1)
 
                     connection = Connection(
@@ -290,12 +311,14 @@ class Parser:
                     connections.append(connection)
 
                 else:
-                    print("\033[31m" + f"ERROR: Line {line_num}: unknown prefix '{prefix}'" + "\033[0m")
+                    print("\033[31m" + f"ERROR: Line {line_num}: "
+                          f"unknown prefix '{prefix}'" + "\033[0m")
                     sys.exit(1)
 
         # Final validations
         if start_zone is None:
-            print("\033[31m" + "ERROR: Map has no start_hub defined" + "\033[0m")
+            print("\033[31m" +
+                  "ERROR: Map has no start_hub defined" + "\033[0m")
             sys.exit(1)
         if end_zone is None:
             print("\033[31m" + "ERROR: Map has no end_hub defined" + "\033[0m")

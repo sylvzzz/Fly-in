@@ -2,6 +2,7 @@ from zone.zone import Zone, ZoneType
 from connection.connection import Connection
 import heapq
 
+
 class Graph:
     def __init__(self) -> None:
         """
@@ -20,16 +21,17 @@ class Graph:
         """
         self.zones[zone.name] = zone
         self.adjacency[zone.name] = []
-    
+
     def add_connection(self, connection: Connection) -> None:
         self.connections.append(connection)
         self.adjacency[connection.zone1.name].append(connection)
         self.adjacency[connection.zone2.name].append(connection)
-    
+
     def get_connection(self, zone1: Zone, zone2: Zone) -> Connection | None:
         # procura na adjacência de zone1 a conexão que liga a zone2
         for connection in self.adjacency[zone1.name]:
-            if connection.zone1.name == zone2.name or connection.zone2.name == zone2.name:
+            if (connection.zone1.name == zone2.name
+                    or connection.zone2.name == zone2.name):
                 return connection
         return None  # não existe conexão entre as duas zonas
 
@@ -43,7 +45,8 @@ class Graph:
                 cost += 1
         return cost
 
-    def generate_paths(self, start: Zone, end: Zone, nb_drones: int) -> list[list[Zone]]:
+    def generate_paths(self, start: Zone, end: Zone,
+                       nb_drones: int) -> list[list[Zone]]:
         distinct_paths: list[list[Zone]] = []
 
         path = self.find_path(start, end)
@@ -71,7 +74,8 @@ class Graph:
             return []
 
         min_cost = self.path_cost(distinct_paths[0])  # já ordenados por custo
-        best_paths = [p for p in distinct_paths if self.path_cost(p) == min_cost]
+        best_paths = [p for p in distinct_paths
+                      if self.path_cost(p) == min_cost]
 
         paths: list[list[Zone]] = []
         for i in range(nb_drones):
@@ -79,13 +83,16 @@ class Graph:
 
         return paths
 
-    def find_path(self, start: Zone, end: Zone, 
-              excluded_zones: set[str] | None = None) -> list[Zone]:
+    def find_path(self, start: Zone, end: Zone,
+                  excluded_zones: set[str] | None = None) -> list[Zone]:
 
-        heap = [(0, start.name)] # priority queue, stores (stores, zone) ordered by smallest cost
-        costs: dict[str, int] = {start.name: 0} # costs dict, stores smallest cost to get to each zone
-        came_from: dict[str, str | None] = {start.name: None} # stores where "we" came from to memorize zonez and path
-        
+        # priority queue, stores (cost, zone) ordered by smallest cost
+        heap = [(0.0, start.name)]
+        # costs dict, stores smallest cost to get to each zone
+        costs: dict[str, int] = {start.name: 0.0}
+        # stores where "we" came from to memorize zonez and path
+        came_from: dict[str, str | None] = {start.name: None}
+
         while heap:
             current_cost, current_name = heapq.heappop(heap)
 
@@ -97,7 +104,7 @@ class Graph:
                     current = came_from[current]
                 path.reverse()  # was from end to start so we reverse
                 return path
-                
+
             # explore all neighbors of current zone
             for connection in self.adjacency[current_name]:
                 if connection.zone1.name == current_name:
@@ -113,16 +120,18 @@ class Graph:
 
                 if neighbor.zone_type == ZoneType.RESTRICTED:
                     move_cost = 2
+                elif neighbor.zone_type == ZoneType.PRIORITY:
+                    move_cost = 0.9
                 else:
                     move_cost = 1
 
                 new_cost = current_cost + move_cost
 
-                if neighbor.name not in costs or new_cost < costs[neighbor.name]:
+                if (neighbor.name not in costs
+                        or new_cost < costs[neighbor.name]):
                     costs[neighbor.name] = new_cost
                     came_from[neighbor.name] = current_name
                     heapq.heappush(heap, (new_cost, neighbor.name))
 
-
         # if all this was done and we got here it means theres no possible path
-        return[]
+        return []

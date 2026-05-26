@@ -1,5 +1,6 @@
 from zone import Zone
 
+
 class Connection:
     """
     Represents a bidirectional link between two zones in the graph.
