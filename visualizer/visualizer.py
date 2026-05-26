@@ -326,7 +326,7 @@ class Visualizer:
                     zone = drone.get("zone")
                     if zone is None and drone.get("in_transit"):
                         dest = drone.get("dest", "?")
-                        status_text = f"→ {dest}"
+                        status_text = f"-> {dest}"
                         color = (255, 200, 100)
                     elif zone is None:
                         status_text = "at ?"
