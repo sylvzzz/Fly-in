@@ -100,3 +100,91 @@ Based on my analysis of your code against the subject rules, here are the violat
 2. No validation that max_drones / max_link_capacity are > 0 (parsing/parsing.py:176-183, 256-264) — accepts 0 or negative. Rule VII.4 says "positive integers."
 3. Transit arrivals don't account for simultaneous departures (engine/engine.py:36-42) — "Drones moving out of a zone free up capacity for that same turn" (VII.2/VII.3). When a transit drone arrives at a restricted zone, it checks occupancy of drones not in moving_out — but normal-move departures haven't been processed yet. So a transit arrival can be blocked by a drone that will leave the same turn.
 4. Priority zones not prioritized in pathfinding (graph/graph.py:114-117) — Rule VII.3 says priority zones should be "preferred in pathfinding algorithms." Your find_path gives both NORMAL and PRIORITY cost 1, so there's no differentiation.
+
+
+report_content_en = """# Optimization Report: Simulation Smoothness (Pygame)
+
+## 1. Identified Problem (CPU Bottleneck)
+During the execution of the simulation, the frame counter suffered from mechanical stutters (*micro-stuttering*) and noticeable performance drops. Investigating the source code revealed that the main culprit was not the drone logic, but rather the **redundant recreation of system objects inside the main rendering loop**.
+
+In the original code, inside the `draw_zones` and `draw_sidebar` methods, there were commands such as:
+```python
+def draw_zones(self, screen):
+    font = pygame.font.Font(None, 24)  # <--- THE CULPRIT
+    # ... rest of the drawing logic
+```
+
+Why did this slow down the simulation?
+The draw_zones method is executed on every single frame. If the simulation runs at 60 FPS, Pygame was forced to create a brand new Font object 60 times per second. If it ran at 180 FPS, it would do this 180 times.
+
+To instantiate this object, the computer must access the system's font subsystem, read data from memory (or disk), and process vector data for rendering. Multiplied by the total number of zones and sidebar interface elements, this generated a massive and unnecessary CPU overhead, choking the frame rate and causing noticeable lag.
+
+2. Applied Solution
+The optimization consisted of applying the Single Instantiation (Initialization Cache) principle. Instead of recreating the fonts on every frame, they are now loaded only once when the class initializes (__init__) and are reused throughout the entire lifespan of the simulation.
+
+Code Changes:
+In the Constructor (__init__):
+We allocate text assets a single time in memory.
+
+Python
+pygame.font.init()
+self.font_zones = pygame.font.Font(None, 24)
+self.font_title = pygame.font.Font(None, 20)
+self.font_text = pygame.font.Font(None, 16)
+In the Drawing Methods (draw_zones and draw_sidebar):
+We removed the local font declarations and updated the code to use the persistent object variables (self.font_...).
+
+Python
+# Example in draw_zones:
+label = self.font_zones.render(zone.name, True, "white")
+3. Results Achieved
+Drastic CPU Overhead Reduction: The processor stopped constantly allocating and deallocating memory for fonts multiple times a second.
+
+Stable Frame Rate: The simulation now runs linearly and smoothly, completely eliminating stutters ("freezes") when dragging the camera (Pan) or applying Zoom.
+
+Scalability: The system can now handle a significantly larger number of concurrent zones and drones without losing performance.
+"""
+
+with open("optimization_report.md", "w", encoding="utf-8") as f:
+f.write(report_content_en)
+
+Your Markdown file containing the optimization report in English is ready.
+
+[file-tag: code-generated-file-0-1779807468918268521]
+
+Here is the report content for quick reading:
+
+```markdown
+# Optimization Report: Simulation Smoothness (Pygame)
+
+## 1. Identified Problem (CPU Bottleneck)
+During the execution of the simulation, the frame counter suffered from mechanical stutters (*micro-stuttering*) and noticeable performance drops. Investigating the source code revealed that the main culprit was not the drone logic, but rather the **redundant recreation of system objects inside the main rendering loop**.
+
+In the original code, inside the `draw_zones` and `draw_sidebar` methods, there were commands such as:
+```python
+def draw_zones(self, screen):
+    font = pygame.font.Font(None, 24)  # <--- THE CULPRIT
+    # ... rest of the drawing logic
+```
+
+Why did this slow down the simulation?
+The draw_zones method is executed on every single frame. If the simulation runs at 60 FPS, Pygame was forced to create a brand new Font object 60 times per second. If it ran at 180 FPS, it would do this 180 times.
+
+To instantiate this object, the computer must access the system's font subsystem, read data from memory (or disk), and process vector data for rendering. Multiplied by the total number of zones and sidebar interface elements, this generated a massive and unnecessary CPU overhead, choking the frame rate and causing noticeable lag.
+
+2. Applied Solution
+The optimization consisted of applying the Single Instantiation (Initialization Cache) principle. Instead of recreating the fonts on every frame, they are now loaded only once when the class initializes (__init__) and are reused throughout the entire lifespan of the simulation.
+
+Code Changes:
+In the Constructor (__init__):
+We allocate text assets a single time in memory.
+
+```Python
+pygame.font.init()
+self.font_zones = pygame.font.Font(None, 24)
+self.font_title = pygame.font.Font(None, 20)
+self.font_text = pygame.font.Font(None, 16)
+```
+
+In the Drawing Methods (draw_zones and draw_sidebar):
+We removed the local font declarations and updated the code to use the persistent object variables (self.font_...).

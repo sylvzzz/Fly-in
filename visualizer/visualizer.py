@@ -64,6 +64,11 @@ class Visualizer:
         self.ZONE_RADIUS = 0  # will be computed based on average scale
         self._label_zoom_threshold = 1.0
 
+        pygame.font.init()  # Garante que o sistema de fontes do Pygame está ativo
+        self.font_zones = pygame.font.Font(None, 24)
+        self.font_title = pygame.font.Font(None, 20)
+        self.font_text = pygame.font.Font(None, 16)
+
         self._compute_offsets()
 
     def _compute_offsets(self) -> None:
@@ -186,7 +191,7 @@ class Visualizer:
             pygame.draw.circle(screen, color, (cx, cy), r)
             pygame.draw.circle(screen, "white", (cx, cy), r, 2)
             if show_labels:  # only render labels if zoom threshold met
-                label = font.render(zone.name, True, "white")
+                label = self.font_zones.render(zone.name, True, "white")
 
                 # 25 = name offset above circle
                 screen.blit(label, (cx - label.get_width() // 2, cy - r - 25))
@@ -256,14 +261,11 @@ class Visualizer:
         pygame.draw.line(screen, (100, 100, 100),
                          (sidebar_x, 0), (sidebar_x, self.HEIGHT), 2)
 
-        font_title = pygame.font.Font(None, 20)
-        font_text = pygame.font.Font(None, 16)
-
         y_offset = 15
 
         # Turn info
         turn_text = f"Turn: {self.current_turn}/{self.total_turns}"
-        turn_label = font_title.render(turn_text, True, "white")
+        turn_label = self.font_title.render(turn_text, True, "white")
         screen.blit(turn_label, (sidebar_x + 10, y_offset))
         y_offset += 35
 
@@ -271,7 +273,7 @@ class Visualizer:
         status = "PAUSED" if self.is_paused else "PLAYING"
         status_color = (255, 100, 100) if self.is_paused else (100, 255, 100)
 
-        status_label = font_text.render(f"Status: {status}",
+        status_label = self.font_text.render(f"Status: {status}",
                                         True, status_color)
 
         screen.blit(status_label, (sidebar_x + 10, y_offset))
@@ -279,7 +281,7 @@ class Visualizer:
 
         # Commands section
         y_offset += 10
-        commands_title = font_title.render("Commands:", True, (200, 200, 200))
+        commands_title = self.font_title.render("Commands:", True, (200, 200, 200))
         screen.blit(commands_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
@@ -298,17 +300,17 @@ class Visualizer:
         ]
 
         for cmd in commands:
-            cmd_label = font_text.render(cmd, True, (180, 180, 180))
+            cmd_label = self.font_text.render(cmd, True, (180, 180, 180))
             screen.blit(cmd_label, (sidebar_x + 10, y_offset))
             y_offset += 18
 
         # Drones section
         y_offset += 15
-        drones_title = font_title.render("Drones:", True, (200, 200, 200))
+        drones_title = self.font_title.render("Drones:", True, (200, 200, 200))
         screen.blit(drones_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
-        fps_info = font_text.render(f"FPS: {self.FPS}", True, (200, 200, 200))
+        fps_info = self.font_text.render(f"FPS: {self.FPS}", True, (200, 200, 200))
         screen.blit(fps_info, (sidebar_x + 10, y_offset))
 
         y_offset += 35
@@ -334,7 +336,7 @@ class Visualizer:
                         color = (200, 200, 200)
 
                 # drone status list
-                drone_label = font_text.render(f"D{i+1}: {status_text}",
+                drone_label = self.font_text.render(f"D{i+1}: {status_text}",
                                                True, color)
 
                 screen.blit(drone_label, (sidebar_x + 10, y_offset))
@@ -458,7 +460,7 @@ class Visualizer:
         screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT),
                                          pygame.RESIZABLE)
         clock = pygame.time.Clock()
-        background = pygame.image.load("assets/fundo.jpeg")
+        background = pygame.image.load("assets/fundo.jpeg").convert()
 
         # Scale background to fit the game area (without sidebar)
         background = pygame.transform.scale(background,
