@@ -1,6 +1,21 @@
 from graph.graph import Graph
 from drone.drone import Drone
 from zone.zone import Zone, ZoneType
+from typing import TypedDict
+
+
+class DroneState(TypedDict):
+    drone_id: int
+    zone: str | None
+    in_transit: bool
+    dest: str | None
+    delivered: bool
+
+
+class TurnData(TypedDict):
+    turn: int
+    connections_used: dict[str, int]
+    drones: list[DroneState]
 
 
 class Engine:
@@ -26,7 +41,7 @@ class Engine:
         self.turns: int = 0
         self.connections_used: dict[str, int] = {}
 
-    def run(self) -> list[dict]:
+    def run(self) -> list[TurnData]:
         """
         Executes the drone delivery simulation until all drones are delivered.
 
@@ -54,10 +69,10 @@ class Engine:
         Returns:
             A list containing the complete simulation history.
         """
-        moves_history = []
+        moves_history: list[TurnData] = []
         while not all(drone.delivered for drone in self.drones):
             self.turns += 1
-            self.connections_used: dict[str, int] = {}
+            self.connections_used = {}
             turn_moves: list[str] = []
             moving_out: set[int] = set()
 
@@ -122,10 +137,6 @@ class Engine:
                                 used = self.connections_used.get(conn_key, 0)
                                 if used >= connection.max_link_capacity:
                                     conn_ok = False
-                                else:
-                                    # c = nbr of drones using that connection
-                                    c = self.connections_used.get(conn_key, 0)
-                                    self.connections_used[conn_key] = c + 1
                             total_in_next = drones_in_next + already_arriving
                             can_fit = total_in_next < next_zone.max_drones
                             if conn_ok and can_fit:
@@ -133,7 +144,7 @@ class Engine:
                                 c_name = f"{d_name}-{next_zone.name}"
                                 drone.in_transit = True
                                 drone.transit_destination = next_zone
-                                drone.current_zone = None  # type: ignore
+                                drone.current_zone = None
                                 drone.path_index += 1
                                 turn_moves[-1] = f"D{drone.drone_id}-{c_name}"
                                 # if it moved dont block
@@ -160,7 +171,8 @@ class Engine:
 
                 if drones_in_zone >= next_zone.max_drones:
                     continue
-
+                if drone.current_zone is None:
+                    continue
                 connection = self.graph.get_connection(drone.current_zone,
                                                        next_zone)
                 if connection is not None:
@@ -188,7 +200,7 @@ class Engine:
                     conn_name = f"{drone.current_zone.name}-{next_zone.name}"
                     drone.in_transit = True
                     drone.transit_destination = next_zone
-                    drone.current_zone = None  # type: ignore
+                    drone.current_zone = None
                     drone.path_index += 1
                     turn_moves.append(f"D{drone.drone_id}-{conn_name}")
                 else:
@@ -210,17 +222,20 @@ class Engine:
                     d.transit_destination.name
                     if d.transit_destination else None
                 )
-                drone_states.append({
-                    "id": d.drone_id,
+                drone_state: DroneState = {
+                    "drone_id": d.drone_id,
                     "zone": zone_name,
                     "in_transit": d.in_transit,
                     "dest": dest_name,
                     "delivered": d.delivered,
-                })
+                }
+                drone_states.append(drone_state)
 
-            moves_history.append({
+            turn_data: TurnData = {
                 "turn": self.turns,
                 "connections_used": dict(self.connections_used),
                 "drones": drone_states,
-            })
+            }
+
+            moves_history.append(turn_data)
         return moves_history

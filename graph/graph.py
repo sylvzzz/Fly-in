@@ -89,7 +89,7 @@ class Graph:
         # priority queue, stores (cost, zone) ordered by smallest cost
         heap = [(0.0, start.name)]
         # costs dict, stores smallest cost to get to each zone
-        costs: dict[str, int] = {start.name: 0.0}
+        costs: dict[str, float] = {start.name: 0.0}
         # stores where "we" came from to memorize zonez and path
         came_from: dict[str, str | None] = {start.name: None}
 
@@ -119,11 +119,11 @@ class Graph:
                     continue
 
                 if neighbor.zone_type == ZoneType.RESTRICTED:
-                    move_cost = 2
+                    move_cost = 2.0
                 elif neighbor.zone_type == ZoneType.PRIORITY:
                     move_cost = 0.9
                 else:
-                    move_cost = 1
+                    move_cost = 1.0
 
                 new_cost = current_cost + move_cost
 

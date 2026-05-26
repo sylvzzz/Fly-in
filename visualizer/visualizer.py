@@ -1,6 +1,7 @@
 import pygame
 from graph.graph import Graph
 from zone.zone import Zone
+from engine.engine import TurnData
 
 
 class Visualizer:
@@ -17,7 +18,8 @@ class Visualizer:
         start_zone: start zone of the simulation
     """
     def __init__(self, WIDTH: int, HEIGHT: int, FPS: int,
-                 graph: Graph, history: list[dict], start_zone: Zone) -> None:
+                 graph: Graph,
+                 history: list[TurnData], start_zone: Zone) -> None:
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
         self.FPS = FPS
@@ -34,7 +36,7 @@ class Visualizer:
 
         self.start_zone = start_zone
 
-        self.ZONE_RADIUS = None  # computed automatically
+        self.ZONE_RADIUS = 0  # computed automatically
         self.ZONE_COLORS = {
             "green":    (50, 200, 50),
             "blue":     (50, 100, 255),
@@ -51,15 +53,15 @@ class Visualizer:
             "rainbow":  (255, 0, 127),  # magenta for "rainbow"
         }
         self.zoom = 0.85  # 1.0 = no zoom; < 1 = zoom out; > 1 = zoom in
-        self.pan_offset_x = 0  # panning offset in pixels
-        self.pan_offset_y = 0
+        self.pan_offset_x = 0.0  # panning offset in pixels
+        self.pan_offset_y = 0.0
         self.pan_limit = 300  # maximum panning distance in pixels
         self.mouse_pressed = False  # track if mouse button is held
         self.mouse_prev_x = 0  # previous mouse position for delta calculation
         self.mouse_prev_y = 0
         self._scale_x = 1.0  # separate x and y scaling for independent spacing
         self._scale_y = 1.0
-        self.ZONE_RADIUS = None  # will be computed based on average scale
+        self.ZONE_RADIUS = 0  # will be computed based on average scale
         self._label_zoom_threshold = 1.0
 
         self._compute_offsets()
@@ -84,8 +86,8 @@ class Visualizer:
         if not self.graph.zones:
             self._scale_x = 1.0
             self._scale_y = 1.0
-            self._map_center_x = 0
-            self._map_center_y = 0
+            self._map_center_x = 0.0
+            self._map_center_y = 0.0
             return
         xs = [z.x for z in self.graph.zones.values()]
         ys = [z.y for z in self.graph.zones.values()]
@@ -153,7 +155,7 @@ class Visualizer:
         )
         return (int(sx), int(sy))
 
-    def draw_zones(self, screen) -> None:
+    def draw_zones(self, screen: pygame.Surface) -> None:
         """
         Renders all zones onto the game screen.
 
@@ -178,8 +180,9 @@ class Visualizer:
         for zone in self.graph.zones.values():
             cx, cy = self.to_screen(zone.x, zone.y)
             # lookup color in dict, fallback to gray
-            color = self.ZONE_COLORS.get(zone.color,
-                                         (150, 150, 150))
+            color = self.ZONE_COLORS.get(
+                zone.color or "gray", (150, 150, 150)
+            )
             pygame.draw.circle(screen, color, (cx, cy), r)
             pygame.draw.circle(screen, "white", (cx, cy), r, 2)
             if show_labels:  # only render labels if zoom threshold met
@@ -188,7 +191,7 @@ class Visualizer:
                 # 25 = name offset above circle
                 screen.blit(label, (cx - label.get_width() // 2, cy - r - 25))
 
-    def draw_connections(self, screen) -> None:
+    def draw_connections(self, screen: pygame.Surface) -> None:
         """
         Renders the connections between zones.
 
@@ -227,7 +230,7 @@ class Visualizer:
         self.game_width = new_width - self.sidebar_width
         self._compute_offsets()
 
-    def draw_sidebar(self, screen) -> None:
+    def draw_sidebar(self, screen: pygame.Surface) -> None:
         """
         Renders the simulation sidebar interface.
 
@@ -412,7 +415,7 @@ class Visualizer:
             if prev_turn_data and not drone["delivered"]:
                 prev_zone_name = None
                 for pd in prev_turn_data["drones"]:
-                    if pd["id"] == drone["id"]:
+                    if pd["drone_id"] == drone["drone_id"]:
                         prev_zone_name = pd["zone"] or pd["dest"]
                         break
                 if prev_zone_name:
