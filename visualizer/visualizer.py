@@ -460,7 +460,7 @@ class Visualizer:
         screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT),
                                          pygame.RESIZABLE)
         clock = pygame.time.Clock()
-        background = pygame.image.load("assets/fundo.jpeg").convert()
+        background = pygame.image.load("assets/background.jpeg").convert()
 
         # Scale background to fit the game area (without sidebar)
         background = pygame.transform.scale(background,
