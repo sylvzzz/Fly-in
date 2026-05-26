@@ -14,7 +14,6 @@ MAP_FILE = maps/challenger/01_the_impossible_dream.txt
 
 MAIN	= Fly-in.py
 VENV := virtual_env
-PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
 
@@ -23,10 +22,10 @@ install:
 	$(PIP) install -r requirements.txt
 
 run:
-	$(PYTHON) $(MAIN) $(MAP_FILE)
+	python3 $(MAIN) $(MAP_FILE)
 
 debug:
-	$(PYTHON) -m pdb $(MAIN)
+	python3 -m pdb $(MAIN)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

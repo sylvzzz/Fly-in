@@ -43,7 +43,7 @@ def main(map_file: str) -> None:
     data = engine.run()
     print(f"\nTotal turns: {len(data)}")
     # screen width, height, graph, list of turns, start_zone
-    vis = Visualizer(1280, 780, 60, graph, data, start)
+    vis = Visualizer(1280, 780, 120, graph, data, start)
     vis.run()
 
 

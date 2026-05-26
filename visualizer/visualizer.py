@@ -32,7 +32,7 @@ class Visualizer:
         self.total_turns = len(history)
         self.is_paused = True
         self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
-        self.animation_speed: float = 0.05   # quanto avança por frame
+        self.animation_speed: float = 0.01   # quanto avança por frame
 
         self.start_zone = start_zone
 
@@ -309,9 +309,10 @@ class Visualizer:
         screen.blit(drones_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
-        fps_info = self.font_text.render(f"FPS: {self.FPS}",
-                                         True, (200, 200, 200))
-        screen.blit(fps_info, (sidebar_x + 10, y_offset))
+        speed_count = round((self.animation_speed * 100) / 2, 1)
+        speed_info = self.font_text.render(f"Speed: {speed_count}",
+                                           True, (200, 200, 200))
+        screen.blit(speed_info, (sidebar_x + 10, y_offset))
 
         y_offset += 35
 
@@ -466,7 +467,7 @@ class Visualizer:
         background = pygame.transform.scale(background,
                                             (self.game_width, self.HEIGHT))
         drone_img = pygame.image.load("assets/bee.png").convert_alpha()
-        drone_img = pygame.transform.scale(drone_img, (30, 30))
+        drone_img = pygame.transform.scale(drone_img, (40, 40))
         running = True
         pygame.display.set_caption("Fly-in by dbotelho")
         while running:
@@ -520,11 +521,11 @@ class Visualizer:
                         self.pan_offset_y = 0
 
                     elif event.key == pygame.K_UP:
-                        if self.FPS < 180:
-                            self.FPS += 15
+                        if self.animation_speed < 0.1:
+                            self.animation_speed += 0.005
                     elif event.key == pygame.K_DOWN:
-                        if self.FPS >= 30:
-                            self.FPS -= 15
+                        if self.animation_speed > 0.01:
+                            self.animation_speed -= 0.005
 
                     elif event.key == pygame.K_s:
                         self.current_turn = 0
