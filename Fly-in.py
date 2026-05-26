@@ -1,10 +1,10 @@
 import os
 import sys
 from parsing import Parser
-from graph.graph import Graph
-from visualizer.visualizer import Visualizer
-from drone.drone import Drone
-from engine.engine import Engine
+from graph import Graph
+from visualizer import Visualizer
+from drone import Drone
+from engine import Engine
 
 
 def main(map_file: str) -> None:

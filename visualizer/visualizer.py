@@ -64,7 +64,7 @@ class Visualizer:
         self.ZONE_RADIUS = 0  # will be computed based on average scale
         self._label_zoom_threshold = 1.0
 
-        pygame.font.init()  # Garante que o sistema de fontes do Pygame está ativo
+        pygame.font.init()
         self.font_zones = pygame.font.Font(None, 24)
         self.font_title = pygame.font.Font(None, 20)
         self.font_text = pygame.font.Font(None, 16)
@@ -177,8 +177,6 @@ class Visualizer:
         Args:
             screen: Pygame surface where the zones will be rendered.
         """
-
-        font = pygame.font.Font(None, 24)
         r = int(self.ZONE_RADIUS * self.zoom)
         # determine if scale is ok to show labels
         show_labels = self.zoom >= self._label_zoom_threshold
@@ -274,14 +272,15 @@ class Visualizer:
         status_color = (255, 100, 100) if self.is_paused else (100, 255, 100)
 
         status_label = self.font_text.render(f"Status: {status}",
-                                        True, status_color)
+                                             True, status_color)
 
         screen.blit(status_label, (sidebar_x + 10, y_offset))
         y_offset += 25
 
         # Commands section
         y_offset += 10
-        commands_title = self.font_title.render("Commands:", True, (200, 200, 200))
+        commands_title = self.font_title.render("Commands:",
+                                                True, (200, 200, 200))
         screen.blit(commands_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
@@ -310,7 +309,8 @@ class Visualizer:
         screen.blit(drones_title, (sidebar_x + 10, y_offset))
         y_offset += 25
 
-        fps_info = self.font_text.render(f"FPS: {self.FPS}", True, (200, 200, 200))
+        fps_info = self.font_text.render(f"FPS: {self.FPS}",
+                                         True, (200, 200, 200))
         screen.blit(fps_info, (sidebar_x + 10, y_offset))
 
         y_offset += 35
@@ -337,7 +337,7 @@ class Visualizer:
 
                 # drone status list
                 drone_label = self.font_text.render(f"D{i+1}: {status_text}",
-                                               True, color)
+                                                    True, color)
 
                 screen.blit(drone_label, (sidebar_x + 10, y_offset))
                 y_offset += 15
