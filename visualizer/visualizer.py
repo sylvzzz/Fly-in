@@ -299,9 +299,17 @@ class Visualizer:
                     status_text = "DELIVERED"
                     color = (100, 255, 100)
                 else:
-                    zone = drone.get("zone", "?")
-                    status_text = f"at {zone}"
-                    color = (200, 200, 200)
+                    zone = drone.get("zone")
+                    if zone is None and drone.get("in_transit"):
+                        dest = drone.get("dest", "?")
+                        status_text = f"→ {dest}"
+                        color = (255, 200, 100)
+                    elif zone is None:
+                        status_text = "at ?"
+                        color = (255, 100, 100)
+                    else:
+                        status_text = f"at {zone}"
+                        color = (200, 200, 200)
                 
                 drone_label = font_text.render(f"D{i+1}: {status_text}", True, color)
                 screen.blit(drone_label, (sidebar_x + 10, y_offset))
@@ -358,8 +366,6 @@ class Visualizer:
         # contar quantos drones estão em cada zona
         zone_drone_count: dict[str, int] = {}
         for d in turn_data["drones"]:
-            if d["delivered"]:
-                continue
             name = d["zone"] or d["dest"]
             if name:
                 zone_drone_count[name] = zone_drone_count.get(name, 0) + 1
@@ -367,8 +373,6 @@ class Visualizer:
         zone_drone_index: dict[str, int] = {}
 
         for drone in turn_data["drones"]:
-            if drone["delivered"]:
-                continue
             zone_name = drone["zone"] or drone["dest"]
             if zone_name is None:
                 continue
@@ -379,8 +383,8 @@ class Visualizer:
 
             cx, cy = self.to_screen(zone.x, zone.y)
 
-            # interpolar com posição anterior
-            if prev_turn_data:
+            # interpolar com posição anterior - mas não para drones entregues
+            if prev_turn_data and not drone["delivered"]:
                 prev_zone_name = None
                 for pd in prev_turn_data["drones"]:
                     if pd["id"] == drone["id"]:
