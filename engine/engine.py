@@ -4,6 +4,20 @@ from zone.zone import Zone, ZoneType
 
 
 class Engine:
+    """
+    Core simulation engine responsible for coordinating drone movement
+    through a graph until all drones reach the destination.
+
+    The engine manages turn-based execution, enforcing constraints such as:
+    - zone capacity limits
+    - connection usage limits
+    - delivery completion conditions
+
+    Args:
+            graph: Graph structure representing zones and connections.
+            drones: List of drones participating in the simulation.
+            end_zone: Final destination zone where drones are considered delivered.
+    """
     def __init__(self, graph: Graph, drones: list[Drone],
                  end_zone: Zone) -> None:
         self.graph = graph
@@ -13,6 +27,33 @@ class Engine:
         self.connections_used: dict[str, int] = {}
 
     def run(self) -> list[dict]:
+        """
+        Executes the drone delivery simulation until all drones are delivered.
+
+        The simulation advances turn by turn while enforcing:
+        - zone capacity constraints
+        - connection capacity limits
+        - restricted-zone transit rules
+        - drone movement synchronization
+
+        Each turn is processed in two phases:
+        1. Resolve drones currently in transit.
+        2. Execute new drone movements.
+
+        Restricted zones require drones to enter a transit state before
+        arriving on the next turn. Connection usage is tracked per turn
+        to ensure link capacities are respected.
+
+        A history list is stored after every turn, including:
+        - turn number
+        - connection usage
+        - drone positions
+        - transit states
+        - delivery status
+
+        Returns:
+            A list containing the complete simulation history.
+        """
         moves_history = []
         while not all(drone.delivered for drone in self.drones):
             self.turns += 1

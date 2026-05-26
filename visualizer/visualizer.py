@@ -4,6 +4,18 @@ from zone.zone import Zone
 
 
 class Visualizer:
+    """
+    Visualizer with pygame for our simulation:
+
+    Args:
+    
+        WIDTH: Screen width
+        HEIGHT: Screen height
+        FPS: Frames per Second of the screen
+        graph: Graph structure of our drones
+        history: list of the total turns
+        start_zone: start zone of the simulation
+    """
     def __init__(self, WIDTH: int, HEIGHT: int, FPS: int,
                  graph: Graph, history: list[dict], start_zone: Zone) -> None:
         self.WIDTH = WIDTH
@@ -53,6 +65,22 @@ class Visualizer:
         self._compute_offsets()
 
     def _compute_offsets(self) -> None:
+        """
+        Computes the map scaling, centering, and rendering offsets.
+
+        This method automatically adjusts the visualization scale based on
+        the distribution of zones in the graph. It calculates:
+
+        - Horizontal and vertical scaling
+        - Map center coordinates
+        - Zone rendering radius
+        - Label visibility zoom threshold
+
+        The scaling is used to avoid excessive zoom levels and
+        adapts quantity of zones in the simulation.
+
+        If no zones exist, default rendering values are assigned.
+        """
         if not self.graph.zones:
             self._scale_x = 1.0
             self._scale_y = 1.0
@@ -96,11 +124,44 @@ class Visualizer:
             self._label_zoom_threshold = 1.45
 
     def to_screen(self, zx: int, zy: int) -> tuple[int, int]:
+        """
+        Converts map coordinates into screen coordinates.
+
+        This transformation applies:
+        - map centering
+        - scaling factors
+        - current zoom level
+        - camera panning offsets
+
+        Args:
+            zx: X coordinate in map space.
+            zy: Y coordinate in map space.
+
+        Returns:
+            A tuple containing the screen-space coordinates `(x, y)`.
+        """
         sx = (zx - self._map_center_x) * self._scale_x * self.zoom + self.game_width // 2 + self.pan_offset_x
         sy = (zy - self._map_center_y) * self._scale_y * self.zoom + self.HEIGHT // 2 + self.pan_offset_y
         return (int(sx), int(sy))
     
     def draw_zones(self, screen) -> None:
+        """
+        Renders all zones onto the game screen.
+
+        Each zone is drawn as a colored circle with an label.
+        Labels are only displayed when the current zoom level exceeds
+        the configured visibility in order to prevent the
+        names pilling up on dense maps.
+
+        Rendering includes:
+        - zone fill color
+        - zone border
+        - optional zone name labels
+
+        Args:
+            screen: Pygame surface where the zones will be rendered.
+        """
+
         font = pygame.font.Font(None, 24)  # None = default font; 24 = font size
         r = int(self.ZONE_RADIUS * self.zoom)
         show_labels = self.zoom >= self._label_zoom_threshold  # adaptive threshold based on zone density
@@ -114,6 +175,17 @@ class Visualizer:
                 screen.blit(label, (cx - label.get_width() // 2, cy - r - 25))  # 25 = name offset above circle
     
     def draw_connections(self, screen) -> None:
+        """
+        Renders the connections between zones.
+
+        Each connection is drawn as a line between the screen-space
+        coordinates of two linked zones. Line thickness scales
+        dynamically with the current zoom level.
+
+        Args:
+            screen: Pygame surface where the connections will be rendered.
+        """
+
         width = max(1, int(4 * self.zoom))  # 4 = base line thickness
         for conn in self.graph.connections:
             z1, z2 = conn.zone1, conn.zone2
@@ -122,7 +194,19 @@ class Visualizer:
             pygame.draw.line(screen, "gray", p1, p2, width)
     
     def _on_window_resized(self, new_width: int, new_height: int) -> None:
-        """Handle window resize event - recalculate offsets for new dimensions."""
+        """
+        Updates internal rendering dimensions after a window resize event.
+
+        This method recalculates:
+        - window dimensions
+        - sidebar width
+        - game viewport width
+        - map scaling and rendering offsets
+
+        Args:
+            new_width: Updated window width in pixels.
+            new_height: Updated window height in pixels.
+        """
         self.WIDTH = new_width
         self.HEIGHT = new_height
         self.sidebar_width = new_width // 8
@@ -130,7 +214,23 @@ class Visualizer:
         self._compute_offsets()
     
     def draw_sidebar(self, screen) -> None:
-        """Draw sidebar with legend, turn info, and commands."""
+        """
+        Renders the simulation sidebar interface.
+
+        The sidebar displays:
+        - current turn information
+        - simulation status
+        - keyboard controls
+        - FPS information
+        - drone statuses
+
+        Drone information is dynamically updated based on the
+        currently selected simulation turn.
+
+        Args:
+            screen: Pygame surface where the sidebar will be rendered.
+        """
+
         sidebar_x = self.game_width
         sidebar_rect = pygame.Rect(sidebar_x, 0, self.sidebar_width, self.HEIGHT)
         pygame.draw.rect(screen, (30, 30, 30), sidebar_rect)  # dark background
@@ -208,6 +308,23 @@ class Visualizer:
                 y_offset += 15
 
     def draw_drones(self, screen: pygame.Surface, drone_img: pygame.Surface) -> None:
+        """
+        Renders all active drones on the map.
+
+        Drone positions are calculated from the current simulation turn and
+        converted into screen-space coordinates. Movement between turns is
+        smoothly animated using linear interpolation based on the current
+        animation progress.
+
+        When multiple drones occupy the same zone, their rendered positions
+        are slightly offset in a circular pattern to avoid visual overlap.
+
+        Delivered drones are excluded from rendering.
+
+        Args:
+            screen: Pygame surface where drones will be rendered.
+            drone_img: Image used to represent each drone.
+        """
         import math
 
         # turno 0 — estado inicial, todos os drones no start
@@ -288,6 +405,23 @@ class Visualizer:
             screen.blit(drone_img, img_rect)
     
     def run(self) -> None:
+        """
+        Starts and manages the main simulation loop.
+
+        This method initializes the Pygame environment, loads graphical
+        interface, updates animation state, and renders
+        all simulation components each frame.
+
+        The loop handles:
+        - window resizing
+        - camera panning
+        - zoom controls
+        - simulation playback controls
+        - FPS adjustments
+        - turn navigation
+        - rendering of zones, connections, drones, and sidebar UI
+        """
+
         pygame.init()
         screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT), pygame.RESIZABLE)
         clock = pygame.time.Clock()
