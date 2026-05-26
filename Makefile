@@ -16,6 +16,17 @@ MAIN	= Fly-in.py
 VENV := virtual_env
 PIP := $(VENV)/bin/pip
 
+MAPS = \
+	maps/easy/01_linear_path.txt \
+	maps/easy/02_simple_fork.txt \
+	maps/easy/03_basic_capacity.txt \
+	maps/medium/01_dead_end_trap.txt \
+	maps/medium/02_circular_loop.txt \
+	maps/medium/03_priority_puzzle.txt \
+	maps/hard/01_maze_nightmare.txt \
+	maps/hard/02_capacity_hell.txt \
+	maps/hard/03_ultimate_challenge.txt \
+	maps/challenger/01_the_impossible_dream.txt
 
 install:
 	python3 -m venv $(VENV)
@@ -23,6 +34,13 @@ install:
 
 run:
 	python3 $(MAIN) $(MAP_FILE)
+
+test-all:
+	@for map in $(MAPS); do \
+		echo "Testing $$map..."; \
+		python3 $(MAIN) $$map 2>/dev/null | tail -1; \
+		echo ""; \
+	done
 
 debug:
 	python3 -m pdb $(MAIN)
@@ -42,4 +60,4 @@ lint-strict:
 	python3 -m mypy . --strict --exclude virtual_env
 
 
-.PHONY: build install run debug clean lint lint-strict
+.PHONY: build install run debug clean lint lint-strict test-all
