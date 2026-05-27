@@ -107,49 +107,6 @@ class Engine:
                         drone.delivered = True
                         continue
 
-                    # imeadiatly tries to move to the next zone
-                    if drone.path_index < len(drone.path):
-                        next_zone = drone.path[drone.path_index]
-                        if next_zone.zone_type == ZoneType.RESTRICTED:
-                            drones_in_next = len([
-                                d for d in self.drones
-                                if d.current_zone is not None
-                                and d.current_zone.name == next_zone.name
-                                and not d.delivered
-                                and d.drone_id not in moving_out
-                            ])
-                            already_arriving = len([
-                                d for d in self.drones
-                                if d.transit_destination is not None
-                                and d.transit_destination.name
-                                == next_zone.name
-                            ])
-                            connection = self.graph.get_connection(
-                                drone.current_zone, next_zone
-                                )
-                            conn_ok = True
-                            if connection is not None:
-                                z1_name = connection.zone1.name
-                                z2_name = connection.zone2.name
-                                key_min = min(z1_name, z2_name)
-                                key_max = max(z1_name, z2_name)
-                                conn_key = f"{key_min}-{key_max}"
-                                used = self.connections_used.get(conn_key, 0)
-                                if used >= connection.max_link_capacity:
-                                    conn_ok = False
-                            total_in_next = drones_in_next + already_arriving
-                            can_fit = total_in_next < next_zone.max_drones
-                            if conn_ok and can_fit:
-                                d_name = drone.current_zone.name
-                                c_name = f"{d_name}-{next_zone.name}"
-                                drone.in_transit = True
-                                drone.transit_destination = next_zone
-                                drone.current_zone = None
-                                drone.path_index += 1
-                                turn_moves[-1] = f"D{drone.drone_id}-{c_name}"
-                                # if it moved dont block
-                                drone.arrived_this_turn = False
-
             moving_in: dict[str, int] = {}
             # Segundo passo: movimentos normais
             for drone in self.drones:
