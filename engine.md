@@ -1,50 +1,52 @@
-# Fly-in — Como funciona o Engine e o Dijkstra
+# Fly-in — How the engine and the dijkstra work
 
----
 
 ## Dijkstra — `find_path`
 
-### O que é o Dijkstra?
+### What is the DIJKSTRA algorithm?
 
-O Dijkstra é um algoritmo de pathfinding que encontra o caminho **mais curto** entre dois nós num grafo com pesos. "Mais curto" significa o caminho com o **menor custo total**, onde cada aresta (conexão) tem um peso (custo em turns).
+THe Dijkstra alogrithm is a pathfinding algorithm commonly used for graphs to the **shortest path** between two nodes with costs in a graph. "Shortest" means the **smallest possible cost**, where each node (connection) has a cost (cost in turns). A real life example of Dijkstra's use could be Google Maps calculating the shortest trip possible on your phone from your current location to the destination you choose.
 
-### Como funciona no teu código
+### How does it work in my code?
 
 ```python
-heap = [(0, start.name)]
-costs = {start.name: 0}
-came_from = {start.name: None}
+# priority queue, stores (cost, zone) ordered by smallest cost
+heap = [(0.0, start.name)]
+# costs dict, stores smallest cost to get to each zone
+costs: dict[str, float] = {start.name: 0.0}
+# stores where "we" came from to memorize zone and path
+came_from: dict[str, str | None] = {start.name: None}
 ```
 
-Três estruturas de dados:
-- **`heap`** — fila de prioridade (min-heap). Guarda `(custo, nome_zona)`. O elemento com menor custo é sempre processado primeiro.
-- **`costs`** — dicionário que guarda o menor custo conhecido para chegar a cada zona.
-- **`came_from`** — dicionário que guarda de onde viemos para chegar a cada zona. Usado no final para reconstruir o caminho.
+Three main data structures:
+- **`heap`** — priority queue, stores `(cost, zone_name)`. The smallest element is always first.
+- **`costs`** — dictionary that stores the smallest possible cost to get to each zone.
+- **`came_from`** — dictionary that stores where we came from to get to each zone, so we can rebuild the path at the end
 
-### O loop principal
+### THe main loop
 
 ```python
 while heap:
     current_cost, current_name = heapq.heappop(heap)
 ```
 
-A cada iteração, retira o nó com menor custo da heap. Este é o nó que vamos explorar agora.
+At eachy iteration we pop out the smallest cost node from the heap, thats the node we're navigating trough now.
 
 ```python
 if current_name == end.name:
-    # reconstruir o caminho
+    # rebuild path
 ```
 
-Se chegámos ao destino, reconstruímos o caminho percorrendo `came_from` de trás para a frente e invertemos.
+If we've arrived at the destiny we rebuild the path using `came_from` from the end to the start to invert the path.
 
-### Exploração de vizinhos
+### Exploring neighbor nodes
 
 ```python
 for connection in self.adjacency[current_name]:
     neighbor = connection.zone2 if connection.zone1.name == current_name else connection.zone1
 
     if neighbor.zone_type == ZoneType.BLOCKED:
-        continue  # zona inacessível, ignora
+        continue  # innaccessible zone, cant use it
 
     move_cost = 2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
     new_cost = current_cost + move_cost
@@ -55,31 +57,31 @@ for connection in self.adjacency[current_name]:
         heapq.heappush(heap, (new_cost, neighbor.name))
 ```
 
-Para cada vizinho:
-1. Se for `BLOCKED`, ignora.
-2. Calcula o custo de mover para lá (`RESTRICTED` custa 2, resto custa 1).
-3. Se o novo custo for melhor que o conhecido, atualiza e adiciona à heap.
+For each neighbor:
+1. If `BLOCKED`, ignores.
+2. Calculates the cost to move to X zone (`RESTRICTED` costs 2, `NORMAL` costs 1, `PRIORITY` costs 0.9 so the dijkstra can prioritize to move there).
+3. If the new cost is better than the previously known one, updates and adds it to the heap.
 
 ### `excluded_zones`
 
-Parâmetro opcional que permite forçar o algoritmo a ignorar certas zonas. Usado em `generate_paths` para encontrar caminhos alternativos.
+Optional attribute that allows the alogrithm to ignore certain zones so the method `generate_paths()` can return different paths for drones
 
 ---
 
-## generate_paths — Distribuição de drones por caminhos
+## generate_paths — Distribute drones paths
 
-### Objetivo
+### Goal
 
-Encontrar múltiplos caminhos distintos e distribuir os drones entre eles para maximizar o paralelismo e reduzir congestionamento.
+Find multiple paths to distribute drones to reduce congestion and keep drones moving.
 
-### Como funciona
+### How it works
 
 ```python
 path = self.find_path(start, end)
 distinct_paths.append(path)
 ```
 
-Começa com o caminho mais curto.
+Starts with shortest path
 
 ```python
 for existing in distinct_paths:
@@ -89,7 +91,7 @@ for existing in distinct_paths:
             distinct_paths.append(alt)
 ```
 
-Para cada caminho já encontrado, tenta excluir cada zona intermédia individualmente e encontrar um caminho alternativo. Se encontrar um novo caminho (diferente dos já conhecidos), adiciona à lista. Repete até não encontrar mais nenhum novo.
+For each zone already found, tries to exclude intermediary zones individually and find alternaives. If a new path different from the ones already know it adds the path to the list. This repeats until theres no more new paths.
 
 ```python
 distinct_paths.sort(key=lambda p: self.path_cost(p))
@@ -97,20 +99,20 @@ min_cost = self.path_cost(distinct_paths[0])
 best_paths = [p for p in distinct_paths if self.path_cost(p) == min_cost]
 ```
 
-Ordena por custo e filtra apenas os caminhos com custo mínimo — não vale a pena enviar drones por rotas mais longas.
+Orders by cost and filters only by the minimal cost, its not worth to send drones to high cost routes.
 
 ```python
 for i in range(nb_drones):
     paths.append(best_paths[i % len(best_paths)])
 ```
 
-Round-robin: distribui os drones ciclicamente pelos melhores caminhos. Com 3 caminhos e 9 drones: D1→C1, D2→C2, D3→C3, D4→C1, D5→C2, ...
+This loop distributes the drones with the best paths possible. An example with 3 paths and 9 drones: D1→P1, D2→P2, D3→P3, D4→P1, D5→P2, ...
 
 ---
 
 ## Engine — `run`
 
-### Estrutura geral de cada turn
+### Structure for every turn
 
 ```python
 while not all(drone.delivered for drone in self.drones):
@@ -123,24 +125,24 @@ while not all(drone.delivered for drone in self.drones):
     for drone in self.drones:
         drone.arrived_this_turn = False
 
-    # Passo 1: chegadas de trânsito
-    # Passo 2: movimentos normais
+    # Step 1: carrivals from transit
+    # Step 2: normals turns
 
     if turn_moves:
         print(" ".join(turn_moves))
 ```
 
-A cada turn:
-- `connections_used` — reset do registo de conexões usadas (limite `max_link_capacity`).
-- `turn_moves` — lista dos movimentos deste turn para o output.
-- `moving_out` — set de IDs de drones que já se moveram (para libertar capacidade corretamente).
-- `arrived_this_turn` — flag que impede double-move em drones que chegaram do trânsito.
+At each turn:
+- `connections_used` - reset of record of used connections (limite `max_link_capacity`).
+- `turn_moves` - list of moves this turn to print it on the terminal.
+- `moving_out` - set of drone ID's of already moved drones (to store).
+- `arrived_this_turn` - flag implemented to block drones from doing more than 1 move per turn
 
 ---
 
-### Passo 1 — Chegadas de trânsito (restricted zones)
+### Step 1 — Arrivals from transit (restricted zones)
 
-Quando um drone entra em trânsito para uma `restricted` zone, demora **2 turns** a chegar. O primeiro turn fica "na connection" (`in_transit=True`, `current_zone=None`). O segundo turn é obrigatório — o drone DEVE chegar.
+When a drone enters transit to a `restricted zone`, it takes **2 turns** to travel, has a cost of 2 to the dijkstra chegar. O primeiro turn fica "na connection" (`in_transit=True`, `current_zone=None`). The second turn is mandatory, it must arrive.
 
 ```python
 for drone in self.drones:
@@ -153,7 +155,7 @@ for drone in self.drones:
         if d.current_zone is not None
         and d.current_zone.name == destination.name
         and not d.delivered
-        and d.drone_id not in moving_out  # não conta quem já saiu este turn
+        and d.drone_id not in moving_out  # doesnt count who already finnished this turn
     ])
 
     if drones_in_dest < destination.max_drones:
@@ -164,32 +166,32 @@ for drone in self.drones:
         turn_moves.append(f"D{drone.drone_id}-{destination.name}")
 ```
 
-Depois de chegar, tenta encadear imediatamente para a próxima zona se também for `restricted`:
+After arriving, tries to immediately chain to the next zone if it is also `restricted`:
 
 ```python
 if drone.path_index < len(drone.path):
     next_zone = drone.path[drone.path_index]
     if next_zone.zone_type == ZoneType.RESTRICTED:
-        # verifica espaço no destino seguinte
+        # checks for space in the next destination
         if conn_ok and drones_in_next + already_arriving < next_zone.max_drones:
             conn_name = f"{drone.current_zone.name}-{next_zone.name}"
             drone.in_transit = True
             drone.current_zone = None
-            drone.arrived_this_turn = False  # já se moveu, não bloquear
+            drone.arrived_this_turn = False  # if moved out, dont block the zone
 ```
 
-Isto evita perder 1 turn desnecessário entre duas `restricted` zones consecutivas.
+This avoids losing an extra turn between two `restricted` zones consecutivas.
 
 ---
 
-### Passo 2 — Movimentos normais
+### Passo 2 — Normal Moves
 
 ```python
 for drone in self.drones:
     if drone.delivered or drone.in_transit:
         continue
     if drone.arrived_this_turn:
-        continue  # já se moveu neste turn (chegou do trânsito)
+        continue  # has moved this turn
 ```
 
 Salta drones já entregues, em trânsito, ou que chegaram do trânsito neste turn.
@@ -201,18 +203,18 @@ drones_in_zone = len([
     if d.current_zone is not None
     and d.current_zone.name == next_zone.name
     and not d.delivered
-    and d.drone_id not in moving_out  # quem já saiu não conta
+    and d.drone_id not in moving_out  # who moved out doesnt count
 ])
 
 if drones_in_zone >= next_zone.max_drones:
-    continue  # zona cheia, drone espera
+    continue  # zone full, drone waits
 ```
 
 **Verificação de capacidade da conexão:**
 ```python
 conn_key = f"{min(z1, z2)}-{max(z1, z2)}"
 if self.connections_used.get(conn_key, 0) >= connection.max_link_capacity:
-    continue  # conexão cheia, drone espera
+    continue  # zone full, drone waits
 self.connections_used[conn_key] += 1
 ```
 
@@ -224,19 +226,21 @@ already_arriving = len([
     and d.transit_destination.name == next_zone.name
 ])
 if drones_in_zone + already_arriving >= next_zone.max_drones:
-    continue  # não há espaço garantido no próximo turn — não entra em trânsito
+    continue  # no space guaranteed for next move, stays
 
 conn_name = f"{drone.current_zone.name}-{next_zone.name}"
 drone.in_transit = True
 drone.transit_destination = next_zone
-drone.current_zone = None  # drone está na connection, não numa zona
+drone.current_zone = None  # drone is at connection , not a zone
 drone.path_index += 1
 turn_moves.append(f"D{drone.drone_id}-{conn_name}")
 ```
 
-O `already_arriving` é crucial — garante que o drone só entra em trânsito se tiver espaço garantido no destino no próximo turn. Sem isto, o drone ficaria bloqueado na connection indefinidamente, violando o subject.
+The `already_arriving` flag is crucial guarantees the drone only enters transit if space is guaranteed on the next zone. Without this he drone would stay at the connection, violating the project rule  `For multi-turn movements (restricted zones), the drone occupies the connection
+during transit and MUST arrive at the destination after the specified number of
+turns. It cannot wait on the connection for an empty space in the destination zone.`
 
-**Movimento normal:**
+**Normal movement:**
 ```python
 drone.current_zone = next_zone
 drone.path_index += 1
@@ -247,11 +251,11 @@ if next_zone.name == self.end_zone.name:
 
 ---
 
-### Regra de libertação de capacidade
+### Free of capacity rule
 
-O subject diz: *"Drones moving out of a zone free up capacity for that same turn."*
+The subject says: *"Drones moving out of a zone free up capacity for that same turn."*
 
-Isto é implementado através do set `moving_out`. Quando contamos drones numa zona, excluímos os que já foram marcados como `moving_out` — como se já tivessem saído. Isto permite que outro drone entre na mesma zona no mesmo turn, desde que haja espaço após as saídas.
+This is implemented via the set() `moving_out`. When we count drones in a zone, we exclude the ones with `moving_out` as they already left. This allows another drones entering that zone, as long there is space for the drone.
 
 ---
 
@@ -262,8 +266,6 @@ if turn_moves:
     print(" ".join(turn_moves))
 ```
 
-Cada turn é uma linha. Os movimentos são separados por espaço:
-- `D1-goal` — movimento normal para zona `goal`
-- `D1-start-loop_a` — drone em trânsito para `loop_a` (restricted), está na connection `start-loop_a`
-
-Drones que não se movem são omitidos. Drones entregues desaparecem do output.
+Each turn is a line printed on the terminal, each move is separated by a space:
+- `D1-goal` - D1 made a made a normal move to zone `goal`
+- `D1-start-loop_a` - drone moving to `loop_a` (restricted zone), is in the connection `start-loop_a`
