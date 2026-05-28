@@ -4,7 +4,7 @@
 ![Demo](assets/demo.gif)
 
 # Description
-This project consists in a drone routing simulator in Python with custom pathfinding for dynamic graphs. Handles simultaneous drone movement, zone occupancy rules, and conflict resolution while optimizing for minimal simulation turns while providing a beautifull visualizer.
+This project consists in a drone routing simulator in Python with custom pathfinding for dynamic graphs. Handles simultaneous drone movement, zone occupancy rules, and conflict resolution while optimizing for minimal simulation turns while providing a visualizer for the simulation.
 
 The goals of this project focus on:
 - Graph algorithms
@@ -18,7 +18,7 @@ The goals of this project focus on:
 
 To run this project please follow the tutorial below:
 
-### Install the dependencies for this project
+#### Install the dependencies for this project
 
 ```bash
 make install
@@ -27,19 +27,19 @@ make install
 ```
 
 
-### After installing and creating the virtual enviroment
+#### After installing and creating the virtual enviroment
 
 ```bash
 source virtual_env/bin/activate # enter the virtual enviroment
 ```
 
-### Running 
+#### Running 
 
 ```bash
 python3 Fly-in.py maps/difficulty_of_your_coice/map_of_your_choice
 ```
 
-### Or via the Makefile:
+#### Or via the Makefile:
 
 ```bash
 make run       # run with default config
@@ -84,9 +84,6 @@ make clean     # remove __pycache__, .mypy_cache, etc.
     ├── bee.png              # drone image
     ├── background.jpeg      # background
 ```
-
-
-# Visualizer overview
 
 # Algorithm overview
 
@@ -136,28 +133,27 @@ cost, nome = heapq.heappop(heap)  # returns (1, "path_a") - cheapest node
 
 # How its used on Dijkstra:
 
-Heap starts: [(0, "start")]
+#### Heap starts: [(0, "start")]
 
-1st iteration -> pop -> (0, "start")<br>
+#### 1st iteration -> pop -> (0, "start")<br>
   neighbors: junction (cost 1), path_b (cost 1)<br>
   push -> [(1, "junction"), (1, "path_b")]<br>
 
-2nd iteration -> pop -> (1, "junction")  <- smallest cost pops out first<br>
+#### 2nd iteration -> pop -> (1, "junction")  <- smallest cost pops out first<br>
   neighbors: goal (cost 2)<br>
   push -> [(1, "path_b"), (2, "goal")]<br>
 
-3rd iteration -> pop -> (1, "path_b")
-  ...<br>
+#### 3rd iteration -> pop -> (1, "path_b") ...<br>
 
 Without heapq we would need to iterate trough the list and find the smallest cost, something that would be quite inefecient. The heapq guarantees that we get the smallest cost every time first, the core of Dijkstras theory
 
 ### The simulation is a loop of turns: 
 
-For each drone thats not delivered, it tries to move it to the next zone of its path.<br>
-Checks if destiny has free space<br>
-If it does move the drone, else waits.<br>
-Records every move of each turn, with the syntax of (Drone_id-Zone_name) ex: D1-zone1 D2-zone2<br>
-Checks if all drones are delivered<br>
+- For each drone thats not delivered, it tries to move it to the next zone of its path.<br>
+- Checks if destiny has free space<br>
+- If it does move the drone, else waits.<br>
+- Records every move of each turn, with the syntax of (Drone_id-Zone_name) ex: D1-zone1 D2-zone2<br>
+- Checks if all drones are delivered<br>
 
 
 ### The main loop
@@ -189,9 +185,9 @@ for connection in self.adjacency[current_name]:
     new_cost = current_cost + move_cost
 
     if neighbor.name not in costs or new_cost < costs[neighbor.name]:
-        costs[neighbor.name] = new_cost
-        came_from[neighbor.name] = current_name
-        heapq.heappush(heap, (new_cost, neighbor.name))
+        costs[neighbor.name] = new_cost  # saving the cost to move to that neighbor
+        came_from[neighbor.name] = current_name  # saving were "we" came from
+        heapq.heappush(heap, (new_cost, neighbor.name))  # saving on the heapq the zone with the cost of traveling there
 ```
 
 For each neighbor:
@@ -205,7 +201,7 @@ Optional attribute that allows the alogrithm to ignore certain zones so the meth
 
 
 
-## generate_paths — Distribute drones paths
+## `generate_paths` — Distribute drones paths
 
 ### Goal
 
@@ -214,8 +210,8 @@ Find multiple paths to distribute drones to reduce congestion and keep drones mo
 ### How it works
 
 ```python
-path = self.find_path(start, end)
-distinct_paths.append(path)
+path = self.find_path(start, end)  # find a path
+distinct_paths.append(path)        # save it
 ```
 
 Starts with shortest path
@@ -224,7 +220,7 @@ Starts with shortest path
 for existing in distinct_paths:
     for zone_name in intermediate:
         alt = self.find_path(start, end, {zone_name})
-        if alt and alt not in distinct_paths:
+        if alt and alt not in distinct_paths:  # if it found an alternative path save it
             distinct_paths.append(alt)
 ```
 
@@ -233,7 +229,8 @@ For each zone already found, tries to exclude intermediary zones individually an
 ```python
 distinct_paths.sort(key=lambda p: self.path_cost(p))
 min_cost = self.path_cost(distinct_paths[0])
-best_paths = [p for p in distinct_paths if self.path_cost(p) == min_cost]
+best_paths = [p for p in distinct_paths if self.path_cost(p) == min_cost]  
+# finding the alternative pahts but save only the ones with minimal cost
 ```
 
 Orders by cost and filters only by the minimal cost, its not worth to send drones to high cost routes.
@@ -244,8 +241,6 @@ for i in range(nb_drones):
 ```
 
 This loop distributes the drones with the best paths possible. An example with 3 paths and 9 drones: D1→P1, D2→P2, D3→P3, D4→P1, D5→P2, ...
-
----
 
 ## Engine
 
@@ -340,7 +335,7 @@ drones_in_zone = len([
     if d.current_zone is not None
     and d.current_zone.name == next_zone.name
     and not d.delivered
-    and d.drone_id not in moving_out  # who moved out doesnt count
+    and d.drone_id not in moving_out  # who moved out doesnt count so we can free the zone faster
 ])
 
 if drones_in_zone >= next_zone.max_drones:
@@ -370,7 +365,7 @@ drone.in_transit = True
 drone.transit_destination = next_zone
 drone.current_zone = None  # drone is at connection , not a zone
 drone.path_index += 1
-turn_moves.append(f"D{drone.drone_id}-{conn_name}")
+turn_moves.append(f"D{drone.drone_id}-{conn_name}")  # saving the move
 ```
 
 The `already_arriving` flag is crucial guarantees the drone only enters transit if space is guaranteed on the next zone. Without this he drone would stay at the connection, violating the project rule  `For multi-turn movements (restricted zones), the drone occupies the connection
@@ -408,6 +403,165 @@ Each turn is a line printed on the terminal, each move is separated by a space:
 - `D1-start-loop_a` - drone moving to `loop_a` (restricted zone), is in the connection `start-loop_a`
 
 <br>
+
+# Visualizer overview
+
+
+The `Visualizer` class provides a 2D graphical interface using **Pygame**. It renders a graph network (zones and connections) on a dynamic drawing and interactive control sidebar.
+
+## What is pygame?
+
+`Pygame` is a python library that allows developers to build graphical interfaces, mainly for 2D games, its very basic on what tools it gives you, it consists on drawing circles, rectangles, lines, presenting texts, capturing keyboard inputs etc.
+
+## Examples
+
+### Capturing keyboard inputs
+```python
+elif event.key == pygame.K_q:  # here is where i capture you clicking the q key on your keyboard
+        running = False        # so i know you want to quit the program
+```
+
+### Loading and presenting images
+
+```python
+        # loading the image and scaling it
+        background = pygame.image.load("assets/background.jpeg").convert()
+        background = pygame.transform.scale(background,
+                                            (self.game_width, self.HEIGHT))
+
+        # loading the drone image
+        drone_img = pygame.image.load("assets/bee.png").convert_alpha()
+        drone_img = pygame.transform.scale(drone_img, (40, 40))
+
+
+    self.draw_drones(screen, drone_img)  # which later i use the image as a drone
+    screen.blit(background, (0, 0)) # rendering the background later
+```
+
+### Drawing things
+
+#### Lines
+
+```python
+        z1, z2 = conn.zone1, conn.zone2   # getting the 2 zones from the connection
+        p1 = self.to_screen(z1.x, z1.y)   # converting them to coordinates on screen
+        p2 = self.to_screen(z2.x, z2.y)
+        pygame.draw.line(screen, "gray", p1, p2, width)  # drawing the line between the zones
+```
+
+#### Circles
+
+```python
+        cx, cy = self.to_screen(zone.x, zone.y)  # getting the center of the circle coordinates
+        pygame.draw.circle(screen, "white", (cx, cy), r, 2) # drawing them on screen
+```
+
+
+#### Labels / Text
+
+```python
+        map_text = f"{self.map_name}"   # text to render
+        map_label = self.font_title.render(map_text, True, "white") # creating/rendering the label
+        screen.blit(map_label, (sidebar_x + 10, y_offset)) # renders the label created before
+```
+
+#### Pratical example on my project
+
+```python
+        # Draw game area
+        screen.blit(background, (0, 0)) # render background
+        keys = pygame.key.get_pressed()  # get the key pressed on the keyboard
+
+        if keys[pygame.K_EQUALS] or keys[pygame.K_PLUS]:  # if key + was pressed increase the zoom
+            # 1.00 = zoom speed; 3.0 = max zoom
+            self.zoom = min(self.zoom * 1.00, 3.0)
+
+        if keys[pygame.K_MINUS]:        # if key - was pressed increase the zoom
+            # 1.00 = zoom speed; 0.7 = min zoom
+            self.zoom = max(self.zoom / 1.00, 0.7)
+
+        self.draw_connections(screen)  # drawing the connections using draw.line()
+        self.draw_zones(screen)        # drawing the zones using draw.circle()
+        self.draw_drones(screen, drone_img)  # drawing the drones using the drone img
+
+        # Draw sidebar
+        self.draw_sidebar(screen)
+```
+
+
+## Core Architecture & Workflow
+
+The visualizer operates on an **event-driven simulation loop**. It processes user inputs, dynamically scales map data, shows drone movements across distinct playback turns, and keeps performance locked to a stable frame rate.
+
+
+           Data Initialization & Scaling Calculation
+
+                              |
+                              v
+                                                      
+                        Main Loop (FPS) <-------------------------|
+                                                                  |
+                              |                                   |
+                              v                                   |
+                                                                  |
+                    Event Handling Pipeline                       |
+      (Keyboard Clicks, Window Resizing, Mouse movements)         |
+                                                                  |
+                              |                                   |
+                              v                                   |
+                                                                  |
+                      Simulation Update                           |
+                       (Playing Turns)                            |
+                                                                  |
+                              |                                   |
+                              v                                   |
+                                                                  |
+                       Rendering Engine                           |
+           (Background -> Lines -> Nodes -> Drones) --------------|
+
+
+---
+
+## Main Component Breakdowns
+
+### 1. Dynamic Coordinate Transformation (`to_screen`)
+The simulation map operates on an adptable grid layout. To render elements properly across zoom levels and windows sizes, it applies an soulution to convert map coordinates into screen coordinates.
+
+
+### 2. Auto-Scaling Mechanics (`_compute_offsets`)
+To improve the visualizer and avoid things such as items out of bounds or pilling up together excessively, the engine automatically calculates boundaries:
+* **Bounding Boxes:** Extracts global minimum/maximum X and Y coordinates from active nodes.
+* **Aspect Adjustments:** Adapts horizontal and vertical axes scaling independently to preserve safe margins relative to the viewport.
+* **Adaptive Radius & Thresholding:** Automatically scales base zone radius and hides labels visibility depending on zone counts (< 35 vs 35 zones).
+
+### 3. Smooth Inter-turn Animations (`draw_drones`)
+Instead of visually teleporting drones between sequential coordinate states, positional rendering uses a smooth incremental execution progress tracking flag ($0.0 \to 1.0$):
+
+$$\text{Position}_{\text{current}} = \text{Position}_{\text{previous}} + (\text{Position}_{\text{target}} - \text{Position}_{\text{previous}}) \cdot \text{Progress}$$
+
+
+---
+
+## Technical Specifications Summary
+
+| Feature | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **Visualization Control** | 2D Engine | Mouse drag; `+` / `-` keys to zoom. |
+| **Asset Scaling** | Dynamic Scaling | Viewport scale automatically recalibrates on window resize events. |
+| **Special Shading** | Rainbow Gradient | Uses HSVA colors for the final map end zone. |
+| **Interface Division** | Aspect Grid Partition | 7/8th of space dedicated to the graph; 1/8th reserved for the status Sidebar. |
+
+---
+
+## Interactive Keybindings Quick Reference
+
+* **`Space`**: Play / Pause simulation.
+* **`Arrow Left` / `Arrow Right`**: Step backward / forward one turn manually.
+* **`Arrow Up` / `Arrow Down`**: Speed up / slow down simulation.
+* **`+` / `-`**: Continuous smooth zoom.
+* **`R`**: Reset zoom and poistion.
+* **`S` / `E`**: Jump straight to Start (Turn 0) or End of simulation.
+* **`Q`**: Safely shutdown Pygame loop context and quit.
 
 # Main Bugs Report
 
