@@ -37,7 +37,7 @@ class Visualizer:
         if self.map_name == "The impossible dream":
             self.animation_speed: float = 0.02   # quanto avança por frame
         else:
-            self.animation_speed: float = 0.01
+            self.animation_speed = 0.01
 
         self.start_zone = start_zone
 
