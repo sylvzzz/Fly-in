@@ -57,7 +57,7 @@ def main(map_file: str) -> None:
     data = engine.run()
     print(f"\nTotal turns: {len(data)}")
     # screen width, height, graph, list of turns, start_zone
-    map_name = maps.get(map_file)
+    map_name = maps.get(map_file, map_file)
     vis = Visualizer(1280, 780, 120, graph, data, start, map_name)
     vis.run()
 
@@ -70,8 +70,9 @@ if __name__ == "__main__":
             os.system("cls" if os.name == "nt" else "clear")
             main(map_file)
         except FileNotFoundError:
-            print("\033[31m" + f"\nMap file {map_file} not found" + "\033[0m")
+            print("\033[31m" + f"Map file {map_file} not found" + "\033[0m")
         except IsADirectoryError:
-            print("\033[31m" + "\nMap file cannot be a directory" + "\033[0m")
+            print("\033[31m" + f"Map file {map_file}/ "
+                  "cannot be a directory" + "\033[0m")
     else:
         print("Correct usage: python3 Fly-in.py map_file.txt")

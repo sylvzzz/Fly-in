@@ -32,10 +32,14 @@ class Visualizer:
         self.total_turns = len(history)
         self.is_paused = True
         self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
-        self.animation_speed: float = 0.01   # quanto avança por frame
+        self.map_name = map_name
+
+        if self.map_name == "The impossible dream":
+            self.animation_speed: float = 0.02   # quanto avança por frame
+        else:
+            self.animation_speed: float = 0.01
 
         self.start_zone = start_zone
-        self.map_name = map_name
 
         self.ZONE_RADIUS = 0  # computed automatically
         self.ZONE_COLORS = {
@@ -62,7 +66,7 @@ class Visualizer:
         self._scale_x = 1.0  # separate x and y scaling for independent spacing
         self._scale_y = 1.0
         self.ZONE_RADIUS = 0  # will be computed based on average scale
-        self._label_zoom_threshold = 1.0
+        self._label_zoom_threshold = 1.0  # decides on what zoom labels showed
 
         pygame.font.init()
         self.font_zones = pygame.font.Font(None, 24)
@@ -182,7 +186,9 @@ class Visualizer:
         for i in range(360):
             color = pygame.Color(0, 0, 0)
             color.hsva = (i, 100, 100, 100)
-            rect = pygame.Rect(cx - radius, cy - radius, radius * 2, radius * 2)
+            rect = pygame.Rect(cx - radius, cy - radius,
+                               radius * 2, radius * 2)
+
             start = math.radians(i)
             end = math.radians(i + 1.5)
             pygame.draw.arc(screen, color, rect, start, end, int(radius))
@@ -343,7 +349,10 @@ class Visualizer:
 
         # speed info
         y_offset += 15
-        speed_count = round((self.animation_speed * 200) / 2, 1)
+        if self.map_name == "The impossible dream":
+            speed_count = round((self.animation_speed * 100) / 2, 1)
+        else:
+            speed_count = round((self.animation_speed * 200) / 2, 1)
         speed_info = self.font_title.render(f"Speed: {speed_count}",
                                             True, (200, 200, 200))
         screen.blit(speed_info, (sidebar_x + 10, y_offset))
