@@ -76,11 +76,11 @@ class Engine:
             turn_moves: list[str] = []
             moving_out: set[int] = set()
 
-            # Reset da flag de chegada de trânsito
+            # Reset the flag
             for drone in self.drones:
                 drone.arrived_this_turn = False
 
-            # Primeiro passo: chegadas obrigatórias de trânsito
+            # First turn: mandatory arrivals from transit
             for drone in self.drones:
                 if drone.delivered or not drone.in_transit:
                     continue
@@ -108,7 +108,7 @@ class Engine:
                         continue
 
             moving_in: dict[str, int] = {}
-            # Segundo passo: movimentos normais
+            # Second step: normal moves
             for drone in self.drones:
                 if drone.delivered or drone.in_transit:
                     continue
@@ -148,7 +148,7 @@ class Engine:
                     self.connections_used[conn_key] = used + 1
 
                 if next_zone.zone_type == ZoneType.RESTRICTED:
-                    # verifica se há espaço garantido no próximo turn
+                    # checks if theres guaranteed space on the next turn
                     already_arriving = len([
                         d for d in self.drones
                         if d.transit_destination is not None
@@ -156,7 +156,7 @@ class Engine:
                     ])
                     total_in_zone = drones_in_zone + already_arriving
                     if total_in_zone >= next_zone.max_drones:
-                        continue  # não entra em trânsito, espera
+                        continue  # doesnt enter tranist waits
                     conn_name = f"{drone.current_zone.name}-{next_zone.name}"
                     drone.in_transit = True
                     drone.transit_destination = next_zone

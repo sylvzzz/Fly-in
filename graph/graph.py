@@ -28,12 +28,12 @@ class Graph:
         self.adjacency[connection.zone2.name].append(connection)
 
     def get_connection(self, zone1: Zone, zone2: Zone) -> Connection | None:
-        # procura na adjacência de zone1 a conexão que liga a zone2
+        # looks for a node that connects zone1 and zone2
         for connection in self.adjacency[zone1.name]:
             if (connection.zone1.name == zone2.name
                     or connection.zone2.name == zone2.name):
                 return connection
-        return None  # não existe conexão entre as duas zonas
+        return None  # no connection between zones
 
     def path_cost(self, path: list[Zone]) -> int:
         """Calcula o custo total de um caminho."""
@@ -57,7 +57,7 @@ class Graph:
         while found_new:
             found_new = False
             for existing in distinct_paths:
-                # tenta excluir subconjuntos de zonas intermédias
+                # excludes zones except start and end
                 intermediate = [z.name for z in existing[1:-1]]
                 for zone_name in intermediate:
                     alt = self.find_path(start, end, {zone_name})
@@ -73,7 +73,7 @@ class Graph:
         if not distinct_paths:
             return []
 
-        min_cost = self.path_cost(distinct_paths[0])  # já ordenados por custo
+        min_cost = self.path_cost(distinct_paths[0])  # ordered by cost
         best_paths = [p for p in distinct_paths
                       if self.path_cost(p) == min_cost]
 

@@ -37,7 +37,7 @@ def main(map_file: str) -> None:
     parser = Parser(map_file)
     nb_drones, start, end, hubs, connections = parser.get_map_data()
 
-    # construir o grafo
+    # build the graph
     graph = Graph()
     graph.add_zone(start)
     graph.add_zone(end)
@@ -46,7 +46,7 @@ def main(map_file: str) -> None:
     for conn in connections:
         graph.add_connection(conn)
 
-    # encontrar caminho e criar drones
+    # find paths and create drones
     paths = graph.generate_paths(start, end, nb_drones)
     drones = [
         Drone(i + 1, start, paths[i % len(paths)])
