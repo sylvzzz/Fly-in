@@ -60,6 +60,7 @@ make clean     # remove __pycache__, .mypy_cache, etc.
 ### For this project i used AI mainly for
 - Calculations for scaling on visualizer
 - Help to implement theory to code on Dijkstra
+- Draw the rainbow end zone for the challenger
 
 ## Project structure
 

@@ -18,8 +18,8 @@ class Visualizer:
         start_zone: start zone of the simulation
     """
     def __init__(self, WIDTH: int, HEIGHT: int, FPS: int,
-                 graph: Graph,
-                 history: list[TurnData], start_zone: Zone) -> None:
+                 graph: Graph, history: list[TurnData],
+                 start_zone: Zone, map_name: str) -> None:
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
         self.FPS = FPS
@@ -35,6 +35,7 @@ class Visualizer:
         self.animation_speed: float = 0.01   # quanto avança por frame
 
         self.start_zone = start_zone
+        self.map_name = map_name
 
         self.ZONE_RADIUS = 0  # computed automatically
         self.ZONE_COLORS = {
@@ -50,7 +51,6 @@ class Visualizer:
             "darkred":  (139, 0, 0),
             "violet":   (238, 130, 238),
             "crimson":  (220, 20, 60),
-            "rainbow":  (255, 0, 127),  # magenta for "rainbow"
         }
         self.zoom = 0.85  # 1.0 = no zoom; < 1 = zoom out; > 1 = zoom in
         self.pan_offset_x = 0.0  # panning offset in pixels
@@ -160,6 +160,33 @@ class Visualizer:
         )
         return (int(sx), int(sy))
 
+    def _draw_rainbow_zone(self, screen: pygame.Surface, cx: int, cy: int,
+                           radius: float) -> None:
+        """
+        Draws a circle filled with a rainbow gradient by angle.
+
+        Draws 360 arcs, one per degree, each with a different hue from the
+        HSVA color model. Each arc has the full radius as thickness, so the
+        slices fill the entire circle. The result is a smooth rainbow that
+        rotates around the center, going from red at 0° to violet at 360°.
+
+        Args:
+            screen: Pygame surface to draw on.
+            cx: X coordinate of the circle center.
+            cy: Y coordinate of the circle center.
+            radius: Radius of the circle in pixels.
+            width: Unused, kept for interface consistency with draw_zones.
+        """
+        import math
+
+        for i in range(360):
+            color = pygame.Color(0, 0, 0)
+            color.hsva = (i, 100, 100, 100)
+            rect = pygame.Rect(cx - radius, cy - radius, radius * 2, radius * 2)
+            start = math.radians(i)
+            end = math.radians(i + 1.5)
+            pygame.draw.arc(screen, color, rect, start, end, int(radius))
+
     def draw_zones(self, screen: pygame.Surface) -> None:
         """
         Renders all zones onto the game screen.
@@ -182,11 +209,16 @@ class Visualizer:
         show_labels = self.zoom >= self._label_zoom_threshold
         for zone in self.graph.zones.values():
             cx, cy = self.to_screen(zone.x, zone.y)
+
             # lookup color in dict, fallback to gray
             color = self.ZONE_COLORS.get(
                 zone.color or "gray", (150, 150, 150)
             )
-            pygame.draw.circle(screen, color, (cx, cy), r)
+            if (zone.name == "impossible_goal"
+                    and self.map_name == "The impossible dream"):
+                self._draw_rainbow_zone(screen, cx, cy, r)
+            else:
+                pygame.draw.circle(screen, color, (cx, cy), r)
             pygame.draw.circle(screen, "white", (cx, cy), r, 2)
             if show_labels:  # only render labels if zoom threshold met
                 label = self.font_zones.render(zone.name, True, "white")
@@ -261,24 +293,30 @@ class Visualizer:
 
         y_offset = 15
 
+        # Map info
+        map_text = f"{self.map_name}"
+        map_label = self.font_title.render(map_text, True, "white")
+        screen.blit(map_label, (sidebar_x + 10, y_offset))
+
+        y_offset += 35
+
         # Turn info
         turn_text = f"Turn: {self.current_turn}/{self.total_turns}"
         turn_label = self.font_title.render(turn_text, True, "white")
         screen.blit(turn_label, (sidebar_x + 10, y_offset))
-        y_offset += 35
+        y_offset += 30
 
         # Status (paused/playing)
         status = "PAUSED" if self.is_paused else "PLAYING"
         status_color = (255, 100, 100) if self.is_paused else (100, 255, 100)
 
-        status_label = self.font_text.render(f"Status: {status}",
-                                             True, status_color)
+        status_label = self.font_title.render(f"Status: {status}",
+                                              True, status_color)
 
         screen.blit(status_label, (sidebar_x + 10, y_offset))
         y_offset += 25
 
         # Commands section
-        y_offset += 10
         commands_title = self.font_title.render("Commands:",
                                                 True, (200, 200, 200))
         screen.blit(commands_title, (sidebar_x + 10, y_offset))
@@ -289,8 +327,8 @@ class Visualizer:
             "-  Zoom out",
             "Space  Play/Pause",
             "<-  Prev turn",
-            "Arror Down  Decrease FPS",
-            "Arrow Up  Increase FPS",
+            "Arror Down  Decrease Speed",
+            "Arrow Up  Increase Speed",
             "->  Next turn",
             "R  Reset view",
             "S  Restart Simulation",
@@ -303,18 +341,19 @@ class Visualizer:
             screen.blit(cmd_label, (sidebar_x + 10, y_offset))
             y_offset += 18
 
-        # Drones section
+        # speed info
         y_offset += 15
-        drones_title = self.font_title.render("Drones:", True, (200, 200, 200))
-        screen.blit(drones_title, (sidebar_x + 10, y_offset))
-        y_offset += 25
-
         speed_count = round((self.animation_speed * 200) / 2, 1)
-        speed_info = self.font_text.render(f"Speed: {speed_count}",
-                                           True, (200, 200, 200))
+        speed_info = self.font_title.render(f"Speed: {speed_count}",
+                                            True, (200, 200, 200))
         screen.blit(speed_info, (sidebar_x + 10, y_offset))
 
         y_offset += 35
+
+        # Drones section
+        drones_title = self.font_title.render("Drones:", True, (200, 200, 200))
+        screen.blit(drones_title, (sidebar_x + 10, y_offset))
+        y_offset += 25
 
         if self.history and self.current_turn > 0:
             turn_data = self.history[self.current_turn - 1]
@@ -492,18 +531,6 @@ class Visualizer:
                         dy = event.pos[1] - self.mouse_prev_y
                         self.pan_offset_x += dx
                         self.pan_offset_y += dy
-                        # Apply panning limits scaled by zoom level
-                        effective_limit = self.pan_limit * self.zoom
-                        self.pan_offset_x = max(
-                            -effective_limit,
-                            min(effective_limit, self.pan_offset_x)
-                            )
-
-                        self.pan_offset_y = max(
-                            -effective_limit,
-                            min(effective_limit, self.pan_offset_y)
-                            )
-
                         self.mouse_prev_x, self.mouse_prev_y = event.pos
 
                 elif event.type == pygame.KEYDOWN:

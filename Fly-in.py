@@ -20,6 +20,20 @@ def main(map_file: str) -> None:
     we send them to the visualizer so we can play around with each
     turn like pause, go back in turns, or just auto play it.
     """
+
+    maps = {
+        "maps/challenger/01_the_impossible_dream.txt": "The impossible dream",
+        "maps/hard/01_maze_nightmare.txt": "Maze nightmare",
+        "maps/hard/02_capacity_hell.txt": "Capacity hell",
+        "maps/hard/03_ultimate_challenge.txt": "Ultimate challenge",
+        "maps/medium/01_dead_end_trap.txt": "Dead end trap",
+        "maps/medium/02_circular_loop.txt": "Circular loop",
+        "maps/medium/03_priority_puzzle.txt": "Priority puzzle",
+        "maps/easy/01_linear_path.txt": "Linear path",
+        "maps/easy/02_simple_fork.txt": "Simple fork",
+        "maps/easy/03_basic_capacity.txt": "Basic capacity"
+    }
+
     parser = Parser(map_file)
     nb_drones, start, end, hubs, connections = parser.get_map_data()
 
@@ -43,7 +57,8 @@ def main(map_file: str) -> None:
     data = engine.run()
     print(f"\nTotal turns: {len(data)}")
     # screen width, height, graph, list of turns, start_zone
-    vis = Visualizer(1280, 780, 120, graph, data, start)
+    map_name = maps.get(map_file)
+    vis = Visualizer(1280, 780, 120, graph, data, start, map_name)
     vis.run()
 
 
@@ -56,5 +71,7 @@ if __name__ == "__main__":
             main(map_file)
         except FileNotFoundError:
             print("\033[31m" + f"\nMap file {map_file} not found" + "\033[0m")
+        except IsADirectoryError:
+            print("\033[31m" + "\nMap file cannot be a directory" + "\033[0m")
     else:
         print("Correct usage: python3 Fly-in.py map_file.txt")
