@@ -16,8 +16,8 @@ class Graph:
 
     def add_zone(self, zone: Zone) -> None:
         """
-        guarda a zona no dicionário de zonas e
-        inicializa a sua lista de adjacência vazia (ainda sem conexões).
+        Stores the zone in a dict of zones and
+        and initializes the zones with no nodes (without connections yet).
         """
         self.zones[zone.name] = zone
         self.adjacency[zone.name] = []
@@ -36,7 +36,7 @@ class Graph:
         return None  # no connection between zones
 
     def path_cost(self, path: list[Zone]) -> int:
-        """Calcula o custo total de um caminho."""
+        """Calculates the total cost of a path"""
         cost = 0
         for zone in path[1:]:
             if zone.zone_type == ZoneType.RESTRICTED:
@@ -121,6 +121,11 @@ class Graph:
                 if neighbor.zone_type == ZoneType.RESTRICTED:
                     move_cost = 2.0
                 elif neighbor.zone_type == ZoneType.PRIORITY:
+                    """
+                    move cost is 0.9 is just for the
+                    dijkstra prioritize this zone, it doesnt affect
+                    total turns, its still makes 1 turn as the normal zones
+                    """
                     move_cost = 0.9
                 else:
                     move_cost = 1.0

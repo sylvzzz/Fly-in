@@ -31,7 +31,7 @@ class Visualizer:
         self.current_turn = 0
         self.total_turns = len(history)
         self.is_paused = True
-        self.animation_progress: float = 0.0  # 0.0 = início, 1.0 = fim
+        self.animation_progress: float = 0.0  # 0.0 = start, 1.0 = end
         self.map_name = map_name
 
         if self.map_name == "The impossible dream":
