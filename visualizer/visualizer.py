@@ -48,12 +48,15 @@ class Visualizer:
             "orange":   (255, 165, 0),
             "purple":   (180, 50, 180),
             "black":    (0, 0, 0),
-            "brown":    (139, 69, 19),
+            "brown":    (139, 69, 19),   # rgb colors
             "maroon":   (128, 0, 0),
             "gold":     (255, 215, 0),
             "darkred":  (139, 0, 0),
             "violet":   (238, 130, 238),
             "crimson":  (220, 20, 60),
+            "cyan":     (13, 252, 255),
+            "yellow":   (255, 255, 0),
+            "magenta":  (255, 8, 255),
         }
         self.zoom = 0.85  # 1.0 = no zoom; < 1 = zoom out; > 1 = zoom in
         self.pan_offset_x = 0.0  # panning offset in pixels
