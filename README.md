@@ -8,10 +8,10 @@ This project consists in a drone routing simulator in Python with custom pathfin
 
 The goals of this project focus on:
 - Graph algorithms
-- OOP design
+- OOP progamming
 - Performance under real-world constraints like bottlenecks and deadlock prevention.
 - Parsing and Data Validation
-- Visualization design
+- Graphical design and programming
 - Self teaching
 
 # Instructions
@@ -22,7 +22,6 @@ To run this project please follow the tutorial below:
 
 ```bash
 make install
-
 # please note that this will install only inside the virtual enviroment, not to the original pip of your machine
 ```
 
