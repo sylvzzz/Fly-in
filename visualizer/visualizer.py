@@ -35,13 +35,12 @@ class Visualizer:
         self.map_name = map_name
 
         if self.map_name == "The impossible dream":
-            self.animation_speed: float = 0.02   # quanto avança por frame
+            self.animation_speed: float = 0.02
         else:
             self.animation_speed = 0.01
 
         self.start_zone = start_zone
 
-        self.ZONE_RADIUS = 0  # computed automatically
         self.ZONE_COLORS = {
             "green":    (50, 200, 50),
             "blue":     (50, 100, 255),
@@ -59,7 +58,6 @@ class Visualizer:
         self.zoom = 0.85  # 1.0 = no zoom; < 1 = zoom out; > 1 = zoom in
         self.pan_offset_x = 0.0  # panning offset in pixels
         self.pan_offset_y = 0.0
-        self.pan_limit = 300  # maximum panning distance in pixels
         self.mouse_pressed = False  # track if mouse button is held
         self.mouse_prev_x = 0  # previous mouse position for delta calculation
         self.mouse_prev_y = 0
