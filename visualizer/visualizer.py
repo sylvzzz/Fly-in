@@ -57,6 +57,7 @@ class Visualizer:
             "cyan":     (13, 252, 255),
             "yellow":   (255, 255, 0),
             "magenta":  (255, 8, 255),
+            "lime":  (80, 252, 7),
         }
         self.zoom = 0.85  # 1.0 = no zoom; < 1 = zoom out; > 1 = zoom in
         self.pan_offset_x = 0.0  # panning offset in pixels
