@@ -9,15 +9,10 @@ class ZoneType(Enum):
 
 
 class Zone:
-    def __init__(
-        self,
-        name: str,
-        x: int,
-        y: int,
-        zone_type: ZoneType = ZoneType.NORMAL,
-        max_drones: int = 1,
-        color: str | None = None,
-    ) -> None:
+    def __init__(self, name: str, x: int, y: int,
+                 zone_type: ZoneType = ZoneType.NORMAL,
+                 max_drones: int = 1,
+                 color: str | None = None, ) -> None:
         self.name = name
         self.x = x
         self.y = y
